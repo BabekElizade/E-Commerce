@@ -2,7 +2,6 @@ package com.babakalizada.auth.security.jwt;
 
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
-import com.babakalizada.common.exception.BaseException;
 import com.babakalizada.common.exception.InvalidTokenException;
 import com.babakalizada.common.exception.TokenExpiredException;
 import com.babakalizada.user.entity.User;
