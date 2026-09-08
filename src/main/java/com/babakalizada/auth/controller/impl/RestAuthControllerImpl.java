@@ -2,10 +2,12 @@ package com.babakalizada.auth.controller.impl;
 
 import com.babakalizada.auth.controller.IRestAuthController;
 import com.babakalizada.auth.dto.request.DtoLoginRequest;
+import com.babakalizada.auth.dto.request.DtoRefreshTokenRequest;
 import com.babakalizada.auth.dto.response.DtoLoginResponse;
 import com.babakalizada.auth.dto.request.DtoRegisterRequest;
 import com.babakalizada.auth.dto.response.DtoRegisterResponse;
 import com.babakalizada.auth.service.IAuthService;
+import com.babakalizada.auth.service.IRefreshTokenService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -15,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 public class RestAuthControllerImpl implements IRestAuthController {
 
     private final IAuthService authService;
+    private final IRefreshTokenService refreshTokenService;
 
     @PostMapping("/register")
     @Override
@@ -30,5 +33,12 @@ public class RestAuthControllerImpl implements IRestAuthController {
             @Valid @RequestBody DtoLoginRequest request
     ) {
         return authService.login(request);
+    }
+
+
+    @PostMapping("/refresh_token")
+    @Override
+    public DtoLoginResponse refreshToken(@RequestBody DtoRefreshTokenRequest refreshToken) {
+        return refreshTokenService.refreshToken(refreshToken);
     }
 }

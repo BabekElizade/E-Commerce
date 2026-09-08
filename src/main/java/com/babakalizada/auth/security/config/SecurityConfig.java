@@ -27,6 +27,7 @@ public class SecurityConfig {
 
     public static final String LOGIN = "/login";
     public static final String REGISTER = "/register";
+    public static final String REFRESH_TOKEN = "/refresh_token";
 
     public static final String DELETE_USER = "/user/delete";
     public static final String UPDATE_USER = "/user/update";
@@ -52,7 +53,8 @@ public class SecurityConfig {
 
                         .requestMatchers(
                                 LOGIN,
-                                REGISTER
+                                REGISTER,
+                                REFRESH_TOKEN
                         )
                         .permitAll()
                         .requestMatchers(
