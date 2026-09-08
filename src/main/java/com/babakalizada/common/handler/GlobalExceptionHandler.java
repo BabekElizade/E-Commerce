@@ -21,6 +21,21 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(createApiError(exception.getMessage(), request, HttpStatus.BAD_REQUEST));
     }
 
+    @ExceptionHandler(TokenExpiredException.class)
+    public ResponseEntity<ApiError<String>> handleTokenExpiredException(
+            TokenExpiredException exception,
+            WebRequest request
+    ) {
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(createApiError(
+                        exception.getMessage(),
+                        request,
+                        HttpStatus.UNAUTHORIZED
+                ));
+    }
+
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiError<String>> handleBusinessException(BusinessException exception, WebRequest request) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

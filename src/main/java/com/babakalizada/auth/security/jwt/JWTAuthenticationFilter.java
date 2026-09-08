@@ -1,5 +1,10 @@
 package com.babakalizada.auth.security.jwt;
 
+import com.babakalizada.common.constant.ErrorMessage;
+import com.babakalizada.common.enums.ErrorCode;
+import com.babakalizada.common.exception.BaseException;
+import com.babakalizada.common.exception.InvalidTokenException;
+import com.babakalizada.common.exception.TokenExpiredException;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -18,6 +23,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
 import java.util.List;
@@ -29,12 +35,15 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private final JWTService jwtService;
     private final UserDetailsService userDetailsService;
     private final IUserRepository userRepository;
+    private final HandlerExceptionResolver handlerExceptionResolver;
+
 
     @Autowired
-    public JWTAuthenticationFilter(JWTService jwtService, UserDetailsService userDetailsService, IUserRepository userRepository) {
+    public JWTAuthenticationFilter(JWTService jwtService, UserDetailsService userDetailsService, IUserRepository userRepository, HandlerExceptionResolver handlerExceptionResolver) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
         this.userRepository = userRepository;
+        this.handlerExceptionResolver = handlerExceptionResolver;
     }
 
     @Override
@@ -65,36 +74,58 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         }
 
         token = header.substring(7);
-
         try {
             username = jwtService.getUsernameByToken(token);
             Optional<User> user = userRepository.findUsersByUsername(username);
 
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                 UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    if (userDetails != null) {
+                        List<GrantedAuthority> authorities = List.of(
+                                new SimpleGrantedAuthority("ROLE_" + user.get().getRole())
+                        );
 
-                if (userDetails != null && !jwtService.isTokenExpired(token)) {
-                    List<GrantedAuthority> authorities = List.of(
-                            new SimpleGrantedAuthority("ROLE_" + user.get().getRole())
-                    );
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        authorities
+                                );
 
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    authorities
-                            );
-
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                }
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
             }
         } catch (ExpiredJwtException e) {
-            System.out.println("Token vaxtı bitib: " + e.getMessage());
-        } catch (Exception e) {
-            System.out.println("JWT xətası: " + e.getMessage());
-        }
+            handlerExceptionResolver.resolveException(
+                    request,
+                    response,
+                    null,
+                    new TokenExpiredException(
+                            new ErrorMessage(
+                                    ErrorCode.TOKEN_EXPIRED,
+                                    "Tokenin müddəti bitib. Yenidən login olun."
+                            )
+                    )
+            );
 
+            return;
+        } catch (Exception e) {
+
+            handlerExceptionResolver.resolveException(
+                    request,
+                    response,
+                    null,
+                    new InvalidTokenException(
+                            new ErrorMessage(
+                                    ErrorCode.INVALID_TOKEN,
+                                    "Token etibarsızdır"
+                            )
+                    )
+            );
+
+            return;
+        }
         filterChain.doFilter(request, response);
     }
 }

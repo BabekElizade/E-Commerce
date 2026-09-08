@@ -29,9 +29,18 @@ public enum ErrorCode {
             "Product stock is not enough"
     ),
 
+    TOKEN_EXPIRED(
+            "TOKEN_EXPIRED",
+            "Token expired"
+    ),
+
     PAYMENT_ALREADY_EXISTS(
             "PAYMENT_ALREADY_EXISTS",
             "Payment already exists"
+    ),
+    INVALID_TOKEN(
+            "INVALID_TOKEN",
+            "Token is invalid"
     );
 
     private String code;
