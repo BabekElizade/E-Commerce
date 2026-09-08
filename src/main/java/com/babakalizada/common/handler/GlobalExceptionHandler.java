@@ -96,6 +96,16 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ApiError<String>> handleInvalidTokenException(InvalidTokenException exception, WebRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(createApiError(
+                        exception.getMessage(),
+                        request,
+                        HttpStatus.UNAUTHORIZED
+                ));
+    }
+
     private String getHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();

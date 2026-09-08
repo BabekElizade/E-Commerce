@@ -10,6 +10,7 @@ import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.BusinessException;
 import com.babakalizada.common.exception.ResourceNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class CategoryServiceImpl implements ICategoryService {
 
     private final ICategoryRepository categoryRepository;
 
+    @Transactional
     @Override
     public DtoCategoryResponse createCategory(DtoCreateCategoryRequest request) {
         if (categoryRepository.existsByName(request.getName())) {
@@ -116,6 +118,7 @@ public class CategoryServiceImpl implements ICategoryService {
         return parentDTOs;
     }
 
+    @Transactional
     @Override
     public DtoCategoryResponse updateCategory(Long id, DtoUpdateCategoryRequest request) {
         Category category = categoryRepository.findById(id)
@@ -170,6 +173,7 @@ public class CategoryServiceImpl implements ICategoryService {
         return mapToResponse(updatedCategory);
     }
 
+    @Transactional
     @Override
     public void deleteCategory(Long id) {
         Category category = categoryRepository.findById(id)

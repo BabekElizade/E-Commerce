@@ -5,6 +5,7 @@ import com.babakalizada.user.dto.response.DtoUserResponse;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
 import com.babakalizada.user.service.IUserService;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -56,6 +57,7 @@ public class UserServiceImpl implements IUserService {
         return dtoUserResponse;
     }
 
+    @Transactional
     @Override
     public boolean deleteUserById(Long id) {
         Optional<User> user = userRepository.findById(id);
@@ -66,6 +68,7 @@ public class UserServiceImpl implements IUserService {
         return true;
     }
 
+    @Transactional
     @Override
     public boolean updateUser(Long id, DtoUpdateUserRequest dtoUserRequest) {
         Optional<User> user = userRepository.findById(id);

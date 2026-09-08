@@ -12,6 +12,7 @@ import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.ResourceNotFoundException;
 import com.babakalizada.common.exception.TokenExpiredException;
 import com.babakalizada.user.repository.IUserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ public class RefreshTokenServiceImpl implements IRefreshTokenService {
         return new Date().after(expiredDate);
     }
 
+    @Transactional
     @Override
     public DtoLoginResponse refreshToken(DtoRefreshTokenRequest refreshToken) {
         Optional<RefreshToken> token = refreshTokenRepository.findByToken(refreshToken.getRefreshToken());

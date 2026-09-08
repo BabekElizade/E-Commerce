@@ -10,6 +10,7 @@ import com.babakalizada.product.entity.Product;
 import com.babakalizada.product.repository.IProductRepository;
 import com.babakalizada.product.search_engine.SearchEngine;
 import com.babakalizada.product.sevice.IProductService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,7 +30,7 @@ public class ProductServiceImpl implements IProductService {
     private final ICategoryRepository categoryRepository;
     private final SearchEngine searchEngine;
 
-
+    @Transactional
     @Override
     public DtoProductResponse createProduct(DtoProductRequest request) {
         if (request.getPrice() == null
@@ -86,6 +87,7 @@ public class ProductServiceImpl implements IProductService {
         return dtoResponse;
     }
 
+    @Transactional
     @Override
     public DtoProductResponse updateProduct(Long id, DtoUpdateProductRequest request) {
         Optional<Product> product = productRepository.findById(id);
@@ -103,6 +105,7 @@ public class ProductServiceImpl implements IProductService {
         return response;
     }
 
+    @Transactional
     @Override
     public void deleteProduct(Long id) {
         Optional<Product> product = productRepository.findById(id);
@@ -112,6 +115,7 @@ public class ProductServiceImpl implements IProductService {
         productRepository.deleteById(id);
     }
 
+    @Transactional
     @Override
     public DtoProductResponse changeProductStatus(Long id, DtoChangeStatusRequest status) {
         Optional<Product> product = productRepository.findById(id);

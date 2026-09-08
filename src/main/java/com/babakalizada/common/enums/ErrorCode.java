@@ -8,7 +8,10 @@ public enum ErrorCode {
             "RESOURCE_NOT_FOUND",
             "Resource not found"
     ),
-
+    ACCESS_DENIED(
+            "ACCESS_DENIED",
+            "You cannot update another user's review!"
+    ),
     BUSINESS_ERROR(
             "BUSINESS_ERROR",
             "Business rule violation"
@@ -37,6 +40,18 @@ public enum ErrorCode {
     PAYMENT_ALREADY_EXISTS(
             "PAYMENT_ALREADY_EXISTS",
             "Payment already exists"
+    ),
+    USER_NOT_FOUND(
+            "USER_NOT_FOUND",
+            "User not found"
+    ),
+    STOCK_NOT_ENOUGH(
+            "STOCK_NOT_ENOUGH",
+            "Stock not enough"
+    ),
+    REVIEW_ALREADY_EXISTS(
+            "REVIEW_ALREADY_EXISTS",
+            "Review Already Exist"
     ),
     INVALID_TOKEN(
             "INVALID_TOKEN",

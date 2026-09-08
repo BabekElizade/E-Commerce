@@ -28,6 +28,7 @@ public class WishListServiceImpl implements IWishListService {
     private final IProductRepository productRepository;
     private final IUserRepository userRepository;
 
+    @Transactional
     @Override
     public DtoWishListItemResponse addItem(
             DtoAddToWishListRequest request
@@ -101,7 +102,7 @@ public class WishListServiceImpl implements IWishListService {
                 .toList();
     }
 
-
+    @Transactional
     @Override
     public void removeItem(Long id) {
 

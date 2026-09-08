@@ -13,6 +13,7 @@ import com.babakalizada.product.entity.Product;
 import com.babakalizada.product.repository.IProductRepository;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,7 @@ public class CartService implements ICartService {
     private final IProductRepository productRepository;
     private final IUserRepository userRepository;
 
+    @Transactional
     @Override
     public DtoCartItemResponse addToCart(DtoAddToCartRequest request) {
         Product product = productRepository.findById(request.getProductId())
@@ -113,6 +115,7 @@ public class CartService implements ICartService {
                 .build();
     }
 
+    @Transactional
     @Override
     public void removeItem(Long id) {
         Optional<CartItem> cartItem = cartItemRepository.findById(id);
@@ -122,6 +125,7 @@ public class CartService implements ICartService {
         cartItemRepository.deleteById(id);
     }
 
+    @Transactional
     @Override
     public DtoCartItemResponse updateItemQuantity(Long id, DtoUpdateItemQuantityRequest request) {
         Optional<CartItem> cartItem = cartItemRepository.findById(id);
@@ -137,6 +141,7 @@ public class CartService implements ICartService {
         return response;
     }
 
+    @Transactional
     @Override
     public void clearCartById(Long id) {
         Optional<Cart> cart = cartRepository.findById(id);

@@ -48,13 +48,6 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private UserStatus status;
 
-    @Column(
-            nullable = false,
-            precision = 12,
-            scale = 2
-    )
-    private BigDecimal balance;
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();

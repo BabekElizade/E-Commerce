@@ -4,10 +4,7 @@ import com.babakalizada.cart.entity.Cart;
 import com.babakalizada.cart.repository.ICartRepository;
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
-import com.babakalizada.common.exception.BusinessException;
-import com.babakalizada.common.exception.ForbiddenException;
-import com.babakalizada.common.exception.InsufficientBalanceException;
-import com.babakalizada.common.exception.PaymentAlreadyExistsException;
+import com.babakalizada.common.exception.*;
 import com.babakalizada.common.util.TransactionUtils;
 import com.babakalizada.order.enums.OrderStatus;
 import com.babakalizada.order.entity.Order;
@@ -23,6 +20,9 @@ import com.babakalizada.payment.service.IPaymentService;
 import com.babakalizada.product.entity.Product;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
+import com.babakalizada.wallet.entity.Wallet;
+import com.babakalizada.wallet.repository.IWalletRepository;
+import com.babakalizada.wallet.service.IWalletService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,17 +39,25 @@ public class PaymentServiceImpl implements IPaymentService {
     private final IOrderRepository orderRepository;
     private final IUserRepository userRepository;
     private final ICartRepository cartRepository;
+    private final IWalletRepository walletRepository;
+    private final IWalletService walletService;
 
     @Transactional
     @Override
     public DtoPaymentResponse pay(Long id) {
 
-        Order order = orderRepository
-                .findById(id)
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Order not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Order Not Found!"
+                                )
+                        )
                 );
+
         User user = getCurrentUser();
+
         if (!user.getId().equals(order.getUser().getId())) {
             throw new ForbiddenException(
                     new ErrorMessage(
@@ -77,7 +85,17 @@ public class PaymentServiceImpl implements IPaymentService {
             );
         }
 
-        if (user.getBalance().compareTo(order.getTotalAmount()) < 0) {
+        Wallet wallet = walletRepository.findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Wallet not found!"
+                                )
+                        )
+                );
+
+        if (wallet.getBalance().compareTo(order.getTotalAmount()) < 0) {
             throw new InsufficientBalanceException(
                     new ErrorMessage(
                             ErrorCode.INSUFFICIENT_BALANCE,
@@ -85,37 +103,68 @@ public class PaymentServiceImpl implements IPaymentService {
                     )
             );
         }
+
         List<OrderItem> orderItems = order.getItems();
+
         for (OrderItem orderItem : orderItems) {
+
             Product product = orderItem.getProduct();
+
             if (product.getStock() < orderItem.getQuantity()) {
-                throw new IllegalArgumentException(
-                        "Product stock not enough: " + product.getName()
+                throw new BusinessException(
+                        new ErrorMessage(
+                                ErrorCode.STOCK_NOT_ENOUGH,
+                                "Stock Not Enough!"
+                        )
                 );
             }
         }
-        user.setBalance(
-                user.getBalance().subtract(order.getTotalAmount())
+
+        String transactionId = "LOCAL-TOP-UP-" + TransactionUtils.transactionalId();
+
+        walletService.debit(
+                wallet.getId(),
+                order.getTotalAmount(),
+                transactionId
         );
+
         for (OrderItem orderItem : orderItems) {
+
             Product product = orderItem.getProduct();
+
             product.setStock(
                     product.getStock() - orderItem.getQuantity()
             );
         }
+
         Payment payment = new Payment();
+
         payment.setUser(user);
         payment.setOrder(order);
         payment.setAmount(order.getTotalAmount());
         payment.setPaymentStatus(PaymentStatus.SUCCESS);
         payment.setPaymentMethod(PaymentMethod.WALLET);
-        payment.setTransactionId(TransactionUtils.transactionalId());
+        payment.setTransactionId(transactionId);
+
         paymentRepository.save(payment);
 
         order.setStatus(OrderStatus.PAID);
         orderRepository.save(order);
 
+        Cart cart = cartRepository.findByUserId(user.getId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Cart not found!"
+                                )
+                        )
+                );
+
+        cart.getItems().clear();
+
         DtoPaymentResponse paymentResponse = new DtoPaymentResponse();
+
         paymentResponse.setOrderId(order.getId());
         paymentResponse.setPaymentId(payment.getId());
         paymentResponse.setPaymentStatus(payment.getPaymentStatus());
@@ -124,13 +173,6 @@ public class PaymentServiceImpl implements IPaymentService {
         paymentResponse.setTransactionId(payment.getTransactionId());
         paymentResponse.setCreatedAt(payment.getCreatedAt());
 
-        Cart cart = cartRepository
-                .findByUserId(user.getId())
-                .orElseThrow(() ->
-                        new IllegalArgumentException("Cart not found")
-                );
-
-        cart.getItems().clear();
         return paymentResponse;
     }
 
@@ -139,7 +181,12 @@ public class PaymentServiceImpl implements IPaymentService {
         Payment payment = paymentRepository
                 .findByOrder_Id(dtoPaymentRequest.getOrderId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Payment not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Payment resource not found!"
+                                )
+                        )
                 );
 
         User user = getCurrentUser();
@@ -171,7 +218,11 @@ public class PaymentServiceImpl implements IPaymentService {
 
         User user = userRepository
                 .findUsersByUsername(username)
-                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        new ErrorMessage(
+                                ErrorCode.RESOURCE_NOT_FOUND,
+                                "User not found"
+                        )));
 
         return user;
     }

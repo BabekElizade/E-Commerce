@@ -20,7 +20,6 @@ import java.util.function.Function;
 @Component
 @RequiredArgsConstructor
 public class JWTService {
-
     private final IUserRepository userRepository;
 
     private static final String SECRET_KEY = "S4SE9wUKeNzNhF8WXeOs05cIRezjF7ZOpa2/vGJviS4=";

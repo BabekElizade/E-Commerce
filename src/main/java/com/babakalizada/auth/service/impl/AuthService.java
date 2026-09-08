@@ -11,7 +11,9 @@ import com.babakalizada.auth.service.IAuthService;
 import com.babakalizada.auth.entity.RefreshToken;
 import com.babakalizada.user.enums.UserRole;
 import com.babakalizada.user.entity.User;
+import com.babakalizada.user.enums.UserStatus;
 import com.babakalizada.user.repository.IUserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.BeanUtils;
@@ -21,6 +23,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,16 +38,20 @@ public class AuthService implements IAuthService {
     private final JWTService jwtService;
     private final IRefreshTokenRepository refreshTokenRepository;
 
+    @Transactional
     @Override
     public DtoRegisterResponse register(DtoRegisterRequest request) {
-        User user = new User();
         DtoRegisterResponse dtoRegisterResponse = new DtoRegisterResponse();
         if (request.getNewPassword().equals(request.getConfirmPassword())) {
-            user.setPassword(bCryptPasswordEncoder.encode(request.getNewPassword()));
-            user.setFirstName(request.getFirstName());
-            user.setLastName(request.getLastName());
-            user.setEmail(request.getEmail());
-            user.setUsername(request.getUsername());
+            User user = User.builder()
+                    .username(request.getUsername())
+                    .password(bCryptPasswordEncoder.encode(request.getNewPassword()))
+                    .email(request.getEmail())
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .role(UserRole.USER)
+                    .status(UserStatus.PENDING)
+                    .build();
             userRepository.save(user);
             BeanUtils.copyProperties(user, dtoRegisterResponse);
             return dtoRegisterResponse;
@@ -60,6 +67,7 @@ public class AuthService implements IAuthService {
         return refreshToken;
     }
 
+    @Transactional
     @Override
     public DtoLoginResponse login(DtoLoginRequest dtoLoginRequest) {
         try {
