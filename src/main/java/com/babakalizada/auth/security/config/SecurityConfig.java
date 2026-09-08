@@ -36,6 +36,13 @@ public class SecurityConfig {
     public static final String UPDATE_CATEGORY = "/e-commerce/update-category";
     public static final String DELETE_CATEGORY = "/e-commerce/delete";
 
+    public static final String[] SWAGGER_PATHS = {
+            "/v3/api-docs",
+            "/v3/api-docs/**",
+            "/swagger-ui.html",
+            "/swagger-ui/**"
+    };
+
     private final JWTAuthenticationFilter jwtAuthenticationFilter;
     private final AuthenticationProvider authenticationProvider;
     private final AuthEntryPoint authEntryPoint;
@@ -57,6 +64,10 @@ public class SecurityConfig {
                                 REFRESH_TOKEN
                         )
                         .permitAll()
+
+                        .requestMatchers(SWAGGER_PATHS)
+                        .permitAll()
+
                         .requestMatchers(
                                 DELETE_USER,
                                 UPDATE_USER,
