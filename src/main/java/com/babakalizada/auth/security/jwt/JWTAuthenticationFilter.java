@@ -53,8 +53,13 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String path = request.getRequestURI();
+
         return path.endsWith("/register")
-                || path.endsWith("/login");
+                || path.endsWith("/login")
+                || path.endsWith("/refresh_token")
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/swagger-ui")
+                || path.equals("/swagger-ui.html");
     }
 
     @Override
