@@ -52,7 +52,7 @@ public class AuthService implements IAuthService {
         return null;
     }
 
-    private RefreshToken createRefreshToken(User user) {
+    public RefreshToken createRefreshToken(User user) {
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setToken(UUID.randomUUID().toString());
         refreshToken.setExpiredDate(new Date(System.currentTimeMillis() + 3600 * 1000 * 4));
