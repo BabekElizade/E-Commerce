@@ -11,6 +11,7 @@ import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.ResourceNotFoundException;
 import com.babakalizada.common.exception.TokenExpiredException;
+import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
