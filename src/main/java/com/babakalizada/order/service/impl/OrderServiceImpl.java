@@ -2,6 +2,11 @@ package com.babakalizada.order.service.impl;
 
 import com.babakalizada.cart.entity.Cart;
 import com.babakalizada.cart.repository.ICartRepository;
+import com.babakalizada.common.constant.ErrorMessage;
+import com.babakalizada.common.enums.ErrorCode;
+import com.babakalizada.common.exception.BusinessException;
+import com.babakalizada.common.exception.InvalidOrderStatusException;
+import com.babakalizada.common.exception.ResourceNotFoundException;
 import com.babakalizada.order.dto.response.DtoOrderItemResponse;
 import com.babakalizada.order.dto.response.DtoOrderResponse;
 import com.babakalizada.order.entity.Order;
@@ -38,11 +43,21 @@ public class OrderServiceImpl implements IOrderService {
         Cart cart = cartRepository
                 .findByUserId(user.getId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Cart not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Cart item not found!"
+                                )
+                        )
                 );
 
         if (cart.getItems().isEmpty()) {
-            throw new IllegalStateException("Cart is empty");
+            throw new ResourceNotFoundException(
+                    new ErrorMessage(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            "Cart items not found!"
+                    )
+            );
         }
 
         Order order = Order.builder()
@@ -57,9 +72,12 @@ public class OrderServiceImpl implements IOrderService {
                 .map(cartItem -> {
 
                     if (cartItem.getProduct().getStock() < cartItem.getQuantity()) {
-                        throw new IllegalStateException(
-                                "Not enough stock for product: "
-                                        + cartItem.getProduct().getName()
+                        throw new BusinessException(
+                                new ErrorMessage(
+                                        ErrorCode.INSUFFICIENT_STOCK,
+                                        "Not enough stock for product: "
+                                                + cartItem.getProduct().getName()
+                                )
                         );
                     }
 
@@ -116,7 +134,12 @@ public class OrderServiceImpl implements IOrderService {
         Order order = orderRepository
                 .findByIdAndUser_Id(orderId, user.getId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Order not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Order not found!"
+                                )
+                        )
                 );
 
         return mapToResponse(order);
@@ -132,12 +155,20 @@ public class OrderServiceImpl implements IOrderService {
         Order order = orderRepository
                 .findByIdAndUser_Id(orderId, user.getId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Order not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Order not found!"
+                                )
+                        )
                 );
 
         if (order.getStatus() != OrderStatus.PENDING) {
-            throw new IllegalStateException(
-                    "Only pending orders can be cancelled"
+            throw new InvalidOrderStatusException(
+                    new ErrorMessage(
+                            ErrorCode.INVALID_ORDER_STATUS,
+                            "Only pending orders can be cancelled"
+                    )
             );
         }
 
@@ -155,7 +186,12 @@ public class OrderServiceImpl implements IOrderService {
         return userRepository
                 .findUsersByUsername(username)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.USER_NOT_FOUND,
+                                        "User not found!"
+                                )
+                        )
                 );
     }
 

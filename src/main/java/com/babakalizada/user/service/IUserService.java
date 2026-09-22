@@ -11,5 +11,5 @@ public interface IUserService {
     public DtoUserResponse getUsersByUsername(String username);
     public DtoUserResponse getUserById(Long id);
     public boolean deleteUserById(Long id);
-    public boolean updateUser(Long id, @Valid DtoUpdateUserRequest dtoUserRequest);
+    public boolean updateUser(Long id, DtoUpdateUserRequest dtoUserRequest);
 }

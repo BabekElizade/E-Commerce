@@ -53,9 +53,20 @@ public enum ErrorCode {
             "REVIEW_ALREADY_EXISTS",
             "Review Already Exist"
     ),
+    INVALID_ORDER_STATUS(
+            "INVALID_ORDER_STATUS",
+            "Invalid Order Status"
+    ),
+    NULL_REQUEST(
+            "NULL_REQUEST",
+            "Null Request"
+    ),
     INVALID_TOKEN(
             "INVALID_TOKEN",
             "Token is invalid"
+    ), RESOURCE_ALREADY_EXISTS(
+            "RESOURCE_ALREADY_EXISTS",
+            "Resource Already Exist"
     );
 
     private String code;

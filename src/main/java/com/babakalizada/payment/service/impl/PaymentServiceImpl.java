@@ -220,7 +220,7 @@ public class PaymentServiceImpl implements IPaymentService {
                 .findUsersByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         new ErrorMessage(
-                                ErrorCode.RESOURCE_NOT_FOUND,
+                                ErrorCode.USER_NOT_FOUND,
                                 "User not found"
                         )));
 

@@ -25,16 +25,64 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    public static final String LOGIN = "/login";
-    public static final String REGISTER = "/register";
-    public static final String REFRESH_TOKEN = "/refresh_token";
+    public static final String[] PUBLIC_AUTH_PATHS = {
+            "/login",
+            "/register",
+            "/refresh-token"
+    };
 
-    public static final String DELETE_USER = "/user/delete";
-    public static final String UPDATE_USER = "/user/update";
+    public static final String[] PUBLIC_GET_PATHS = {
+            "/product/search",
+            "/product/list",
+            "/product/list/*",
+            "/product/get-by-category/*",
 
-    public static final String CREATE_CATEGORY = "/e-commerce/create";
-    public static final String UPDATE_CATEGORY = "/e-commerce/update-category";
-    public static final String DELETE_CATEGORY = "/e-commerce/delete";
+            "/e-commerce/parent-category",
+            "/e-commerce/category/*",
+
+            "/review/get-by-product-id/*",
+            "/review/*"
+    };
+
+    public static final String[] ADMIN_POST_PATHS = {
+            "/product/create",
+            "/e-commerce/create"
+    };
+
+    public static final String[] ADMIN_PUT_PATHS = {
+            "/product/update/*",
+            "/product/change-status/*",
+            "/e-commerce/update-category/*"
+    };
+
+    public static final String[] ADMIN_DELETE_PATHS = {
+            "/product/delete/*",
+            "/e-commerce/delete/*"
+    };
+
+    public static final String[] ADMIN_GET_PATHS = {
+            "/user/list",
+            "/payment/list"
+    };
+
+    public static final String[] AUTHENTICATED_PATHS = {
+            "/user/by-id/*",
+            "/user/by-username/*",
+            "/user/update/*",
+            "/user/delete/*",
+
+            "/cart/**",
+            "/wishlist/**",
+            "/wallet/me/**",
+
+            "/review/create",
+            "/review/update/*",
+            "/review/delete/*",
+            "/review/get-my-reviews",
+
+            "/payment/pay/*",
+            "/orders/**"
+    };
 
     public static final String[] SWAGGER_PATHS = {
             "/v3/api-docs",
@@ -54,31 +102,20 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SWAGGER_PATHS).permitAll()
 
-                        .requestMatchers(HttpMethod.OPTIONS, "/**")
-                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_PATHS).permitAll()
 
-                        .requestMatchers(
-                                LOGIN,
-                                REGISTER,
-                                REFRESH_TOKEN
-                        )
-                        .permitAll()
+                        .requestMatchers(HttpMethod.POST, ADMIN_POST_PATHS).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, ADMIN_PUT_PATHS).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, ADMIN_DELETE_PATHS).hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, ADMIN_GET_PATHS).hasRole("ADMIN")
 
-                        .requestMatchers(SWAGGER_PATHS)
-                        .permitAll()
+                        .requestMatchers(AUTHENTICATED_PATHS).authenticated()
 
-                        .requestMatchers(
-                                DELETE_USER,
-                                UPDATE_USER,
-                                CREATE_CATEGORY,
-                                UPDATE_CATEGORY,
-                                DELETE_CATEGORY
-                        )
-                        .hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, PUBLIC_GET_PATHS).permitAll()
 
-                        .anyRequest()
-                        .authenticated()
+                        .anyRequest().denyAll()
                 )
                 .exceptionHandling(exception ->
                         exception.authenticationEntryPoint(authEntryPoint)

@@ -9,6 +9,9 @@ import com.babakalizada.cart.entity.CartItem;
 import com.babakalizada.cart.repository.ICartItemRepository;
 import com.babakalizada.cart.repository.ICartRepository;
 import com.babakalizada.cart.service.ICartService;
+import com.babakalizada.common.constant.ErrorMessage;
+import com.babakalizada.common.enums.ErrorCode;
+import com.babakalizada.common.exception.ResourceNotFoundException;
 import com.babakalizada.product.entity.Product;
 import com.babakalizada.product.repository.IProductRepository;
 import com.babakalizada.user.entity.User;
@@ -38,7 +41,12 @@ public class CartService implements ICartService {
     public DtoCartItemResponse addToCart(DtoAddToCartRequest request) {
         Product product = productRepository.findById(request.getProductId())
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Product not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Product not found!"
+                                )
+                        )
                 );
 
         String username = SecurityContextHolder
@@ -48,7 +56,12 @@ public class CartService implements ICartService {
 
         User user = userRepository.findUsersByUsername(username)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("User not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.USER_NOT_FOUND,
+                                        "User not found!"
+                                )
+                        )
                 );
 
         Cart cart = cartRepository.findByUserId(user.getId())
@@ -84,7 +97,12 @@ public class CartService implements ICartService {
 
         Cart cart = cartRepository.findById(id)
                 .orElseThrow(() ->
-                        new IllegalArgumentException("Cart not found")
+                        new ResourceNotFoundException(
+                                new ErrorMessage(
+                                        ErrorCode.RESOURCE_NOT_FOUND,
+                                        "Cart not found!"
+                                )
+                        )
                 );
 
         List<DtoCartItemResponse> items = cart.getItems()
@@ -120,7 +138,12 @@ public class CartService implements ICartService {
     public void removeItem(Long id) {
         Optional<CartItem> cartItem = cartItemRepository.findById(id);
         if (cartItem.isEmpty()) {
-            throw new IllegalArgumentException("Cart item not found");
+            throw new ResourceNotFoundException(
+                    new ErrorMessage(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            "Cart item not found!"
+                    )
+            );
         }
         cartItemRepository.deleteById(id);
     }
@@ -130,7 +153,12 @@ public class CartService implements ICartService {
     public DtoCartItemResponse updateItemQuantity(Long id, DtoUpdateItemQuantityRequest request) {
         Optional<CartItem> cartItem = cartItemRepository.findById(id);
         if (cartItem.isEmpty()) {
-            throw new IllegalArgumentException("Cart item not found");
+            throw new ResourceNotFoundException(
+                    new ErrorMessage(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            "Cart item not found!"
+                    )
+            );
         }
         cartItem.get().setQuantity(request.getQuantity());
         CartItem savedItem = cartItemRepository.save(cartItem.get());
@@ -146,7 +174,12 @@ public class CartService implements ICartService {
     public void clearCartById(Long id) {
         Optional<Cart> cart = cartRepository.findById(id);
         if (cart.isEmpty()) {
-            throw new IllegalArgumentException("Cart not found");
+            throw new ResourceNotFoundException(
+                    new ErrorMessage(
+                            ErrorCode.RESOURCE_NOT_FOUND,
+                            "Cart item not found!"
+                    )
+            );
         }
         cart.get().getItems().clear();
         cartRepository.save(cart.get());

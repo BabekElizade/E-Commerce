@@ -38,11 +38,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiError<String>> handleBusinessException(BusinessException exception, WebRequest request) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_CONTENT)
                 .body(createApiError(
                         exception.getMessage(),
                         request,
-                        HttpStatus.BAD_REQUEST
+                        HttpStatus.UNPROCESSABLE_CONTENT
                 ));
     }
 
@@ -58,21 +58,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity<ApiError<String>> handleInsufficientBalanceException(InsufficientBalanceException exception, WebRequest request) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(createApiError(
                         exception.getMessage(),
                         request,
-                        HttpStatus.BAD_REQUEST
+                        HttpStatus.CONFLICT
                 ));
     }
 
     @ExceptionHandler(InsufficientStockException.class)
     public ResponseEntity<ApiError<String>> handleInsufficientStockException(InsufficientStockException exception, WebRequest request) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(createApiError(
                         exception.getMessage(),
                         request,
-                        HttpStatus.BAD_REQUEST
+                        HttpStatus.CONFLICT
                 ));
     }
 
@@ -103,6 +103,26 @@ public class GlobalExceptionHandler {
                         exception.getMessage(),
                         request,
                         HttpStatus.UNAUTHORIZED
+                ));
+    }
+
+    @ExceptionHandler(NullRequestException.class)
+    public ResponseEntity<ApiError<String>> handleNullRequestException(NullRequestException exception, WebRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createApiError(
+                        exception.getMessage(),
+                        request,
+                        HttpStatus.BAD_REQUEST
+                ));
+    }
+
+    @ExceptionHandler(ResourceAlreadyExistsException.class)
+    public ResponseEntity<ApiError<String>> handleResourceAlreadyExistsException(ResourceAlreadyExistsException exception, WebRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createApiError(
+                        exception.getMessage(),
+                        request,
+                        HttpStatus.BAD_REQUEST
                 ));
     }
 

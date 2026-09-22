@@ -9,6 +9,10 @@ import com.babakalizada.auth.repository.IRefreshTokenRepository;
 import com.babakalizada.auth.security.jwt.JWTService;
 import com.babakalizada.auth.service.IAuthService;
 import com.babakalizada.auth.entity.RefreshToken;
+import com.babakalizada.common.constant.ErrorMessage;
+import com.babakalizada.common.enums.ErrorCode;
+import com.babakalizada.common.exception.ForbiddenException;
+import com.babakalizada.common.exception.NullRequestException;
 import com.babakalizada.user.enums.UserRole;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.enums.UserStatus;
@@ -42,6 +46,14 @@ public class AuthService implements IAuthService {
     @Override
     public DtoRegisterResponse register(DtoRegisterRequest request) {
         DtoRegisterResponse dtoRegisterResponse = new DtoRegisterResponse();
+        if(request == null) {
+            throw new NullRequestException(
+                    new ErrorMessage(
+                            ErrorCode.NULL_REQUEST,
+                            "Null Request"
+                    )
+            );
+        }
         if (request.getNewPassword().equals(request.getConfirmPassword())) {
             User user = User.builder()
                     .username(request.getUsername())
@@ -86,6 +98,14 @@ public class AuthService implements IAuthService {
 
             Date bakuZone = new Date(jwtService.getExpirationDateByToken(accessToken).getTime() + (4 * 60 * 60 * 1000));
             UserRole role = user.get().getRole();
+            if (user.get().getStatus() != UserStatus.ACTIVE) {
+                throw new ForbiddenException(
+                        new ErrorMessage(
+                                ErrorCode.FORBIDDEN,
+                                "Account is not active"
+                        )
+                );
+            }
             return new DtoLoginResponse(accessToken ,dtoRefreshTokenResponse ,bakuZone ,role);
         } catch (Exception e) {
             System.out.println("Username or Password is wrong!");

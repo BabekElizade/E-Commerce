@@ -4,11 +4,11 @@ import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import io.jsonwebtoken.security.Keys;
-
+import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
@@ -21,6 +21,7 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class JWTService {
     private final IUserRepository userRepository;
+    private final HandlerExceptionResolver handlerExceptionResolver;
 
     private static final String SECRET_KEY = "S4SE9wUKeNzNhF8WXeOs05cIRezjF7ZOpa2/vGJviS4=";
     public static SecretKey secretKey = Keys.hmacShaKeyFor(SECRET_KEY.getBytes());

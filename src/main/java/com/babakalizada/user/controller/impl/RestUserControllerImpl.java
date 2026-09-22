@@ -26,13 +26,13 @@ public class RestUserControllerImpl implements IRestUserController {
         return userService.getAllUsers();
     }
 
-    @GetMapping(path = "list/{username}")
+    @GetMapping(path = "by-username/{username}")
     @Override
     public DtoUserResponse getUsersByUsername(@PathVariable(name = "username") String username) {
         return userService.getUsersByUsername(username);
     }
 
-    @GetMapping(path = "/list/{id}")
+    @GetMapping(path = "/by-id/{id}")
     @Override
     public DtoUserResponse getUserById(@PathVariable(name = "id") Long id) {
         return userService.getUserById(id);

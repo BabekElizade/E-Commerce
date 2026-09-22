@@ -5,6 +5,7 @@ import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.InvalidTokenException;
 import com.babakalizada.common.exception.TokenExpiredException;
 import com.babakalizada.user.entity.User;
+import com.babakalizada.user.enums.UserStatus;
 import com.babakalizada.user.repository.IUserRepository;
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
@@ -80,25 +81,63 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
         token = header.substring(7);
         try {
             username = jwtService.getUsernameByToken(token);
-            Optional<User> user = userRepository.findUsersByUsername(username);
 
-            if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    if (userDetails != null) {
-                        List<GrantedAuthority> authorities = List.of(
-                                new SimpleGrantedAuthority("ROLE_" + user.get().getRole())
+            if (username == null || username.isBlank()) {
+                throw new InvalidTokenException(
+                        new ErrorMessage(
+                                ErrorCode.INVALID_TOKEN,
+                                "Token does not contain a valid username"
+                        )
+                );
+            }
+
+            User user = userRepository.findUsersByUsername(username)
+                    .orElseThrow(() -> new InvalidTokenException(
+                            new ErrorMessage(
+                                    ErrorCode.INVALID_TOKEN,
+                                    "Token user no longer exists"
+                            )
+                    ));
+
+            if (user.getStatus() != UserStatus.ACTIVE) {
+                SecurityContextHolder.clearContext();
+
+                handlerExceptionResolver.resolveException(
+                        request,
+                        response,
+                        null,
+                        new InvalidTokenException(
+                                new ErrorMessage(
+                                        ErrorCode.INVALID_TOKEN,
+                                        "Account is not active"
+                                )
+                        )
+                );
+                return;
+            }
+
+            if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails =
+                        userDetailsService.loadUserByUsername(username);
+
+                List<GrantedAuthority> authorities = List.of(
+                        new SimpleGrantedAuthority("ROLE_" + user.getRole())
+                );
+
+                UsernamePasswordAuthenticationToken authentication =
+                        new UsernamePasswordAuthenticationToken(
+                                userDetails,
+                                null,
+                                authorities
                         );
 
-                        UsernamePasswordAuthenticationToken authentication =
-                                new UsernamePasswordAuthenticationToken(
-                                        userDetails,
-                                        null,
-                                        authorities
-                                );
+                authentication.setDetails(
+                        new WebAuthenticationDetailsSource()
+                                .buildDetails(request)
+                );
 
-                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                        SecurityContextHolder.getContext().setAuthentication(authentication);
-                    }
+                SecurityContextHolder.getContext()
+                        .setAuthentication(authentication);
             }
         } catch (ExpiredJwtException e) {
             handlerExceptionResolver.resolveException(
