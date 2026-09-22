@@ -1,18 +1,18 @@
 package com.babakalizada.product.controller;
 
+import org.springframework.data.domain.Page;
 import com.babakalizada.product.dto.request.DtoChangeStatusRequest;
 import com.babakalizada.product.dto.request.DtoProductRequest;
 import com.babakalizada.product.dto.response.DtoProductResponse;
 import com.babakalizada.product.dto.request.DtoUpdateProductRequest;
 
-import java.util.List;
 
 public interface IRestProductController {
     DtoProductResponse createProduct(DtoProductRequest request);
 
     DtoProductResponse getProductById(Long id);
 
-    List<DtoProductResponse> getAllProducts();
+    Page<DtoProductResponse> getAllProducts(int page, int size);
 
     DtoProductResponse updateProduct(Long id, DtoUpdateProductRequest request);
 
@@ -20,7 +20,7 @@ public interface IRestProductController {
 
     DtoProductResponse changeProductStatus(Long id, DtoChangeStatusRequest status);
 
-    List<DtoProductResponse> getProductsByCategory(Long categoryId);
+    Page<DtoProductResponse> getProductsByCategory(int page, int size, Long categoryId);
 
-    List<DtoProductResponse> searchProducts(String query);
+    Page<DtoProductResponse> searchProducts(int page, int size, String query);
 }

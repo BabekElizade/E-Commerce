@@ -1,5 +1,6 @@
 package com.babakalizada.product.controller.impl;
 
+import org.springframework.data.domain.Page;
 import com.babakalizada.product.controller.IRestProductController;
 import com.babakalizada.product.dto.request.DtoChangeStatusRequest;
 import com.babakalizada.product.dto.request.DtoProductRequest;
@@ -9,10 +10,12 @@ import com.babakalizada.product.sevice.IProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/product")
@@ -39,8 +42,16 @@ public class RestProductControllerImpl implements IRestProductController {
     @GetMapping(path = "/list")
     @ResponseStatus(HttpStatus.OK)
     @Override
-    public List<DtoProductResponse> getAllProducts() {
-        return productService.getAllProducts();
+    public Page<DtoProductResponse> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return productService.getAllProducts(pageable);
     }
 
     @PutMapping(path = "/update/{id}")
@@ -67,14 +78,32 @@ public class RestProductControllerImpl implements IRestProductController {
     @GetMapping(path = "/get-by-category/{category_id}")
     @ResponseStatus(HttpStatus.OK)
     @Override
-    public List<DtoProductResponse> getProductsByCategory(@PathVariable(name = "category_id") Long categoryId) {
-        return productService.getProductsByCategory(categoryId);
+    public Page<DtoProductResponse> getProductsByCategory(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @PathVariable(name = "category_id") Long categoryId
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return productService.getProductsByCategory(categoryId, pageable);
     }
 
     @GetMapping(path = "/search")
     @ResponseStatus(HttpStatus.OK)
     @Override
-    public List<DtoProductResponse> searchProducts(@RequestParam(name = "query") String query) {
-        return productService.searchProducts(query);
+    public Page<DtoProductResponse> searchProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(name = "query") String query
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+        return productService.searchProducts(query, pageable);
     }
 }

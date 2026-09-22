@@ -14,5 +14,4 @@ public class DtoLoginResponse {
     private String access_token;
     private DtoRefreshTokenResponse refresh_token;
     private Date expiredDate;
-    private UserRole role;
 }

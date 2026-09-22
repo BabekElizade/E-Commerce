@@ -1,19 +1,21 @@
 package com.babakalizada.product.search_engine;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.product.entity.Product;
 import com.babakalizada.product.repository.IProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 
 @Component
 @RequiredArgsConstructor(onConstructor_ = @Autowired)
 public class SearchEngine {
     private final IProductRepository productRepository;
 
-    public List<Product> search(String query) {
+    public Page<Product> search(String query, Pageable pageable) {
 
         if (query == null || query.isBlank()) {
             throw new IllegalArgumentException("Search query cannot be empty");
@@ -23,7 +25,8 @@ public class SearchEngine {
                 .findByNameContainingIgnoreCaseOrDescriptionContainingIgnoreCaseOrSkuContainingIgnoreCase(
                         query,
                         query,
-                        query
+                        query,
+                        pageable
                 );
     }
 }

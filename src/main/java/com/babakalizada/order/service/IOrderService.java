@@ -1,14 +1,16 @@
 package com.babakalizada.order.service;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.order.dto.response.DtoOrderResponse;
 
-import java.util.List;
 
 public interface IOrderService {
 
     DtoOrderResponse createOrder();
 
-    List<DtoOrderResponse> getMyOrders();
+    Page<DtoOrderResponse> getMyOrders(Pageable pageable);
 
     DtoOrderResponse getMyOrder(Long orderId);
 

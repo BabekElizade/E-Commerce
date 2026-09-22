@@ -1,5 +1,14 @@
 package com.babakalizada.user.controller.impl;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Sort;
+
+import org.springframework.data.domain.PageRequest;
+
+import org.springframework.data.domain.Pageable;
+
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.user.controller.IRestUserController;
 import com.babakalizada.user.dto.request.DtoUpdateUserRequest;
 import com.babakalizada.user.dto.response.DtoUserResponse;
@@ -8,7 +17,6 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -21,9 +29,19 @@ public class RestUserControllerImpl implements IRestUserController {
     }
 
     @GetMapping(path = "/list")
+    @ResponseStatus(HttpStatus.OK)
     @Override
-    public List<DtoUserResponse> getAllUsers() {
-        return userService.getAllUsers();
+    public Page<DtoUserResponse> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "id")
+        );
+
+        return userService.getAllUsers(pageable);
     }
 
     @GetMapping(path = "by-username/{username}")

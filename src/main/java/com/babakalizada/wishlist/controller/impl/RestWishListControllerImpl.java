@@ -1,5 +1,12 @@
 package com.babakalizada.wishlist.controller.impl;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+
+import org.springframework.data.domain.Pageable;
+
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.wishlist.controller.IRestWishListController;
 import com.babakalizada.wishlist.dto.request.DtoAddToWishListRequest;
 import com.babakalizada.wishlist.dto.response.DtoWishListItemResponse;
@@ -10,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/wishlist")
@@ -30,8 +36,18 @@ public class RestWishListControllerImpl implements IRestWishListController {
     @GetMapping(path = "/list/{id}")
     @ResponseStatus(HttpStatus.OK)
     @Override
-    public List<DtoWishListItemResponse> getItemsById(@PathVariable(name = "id") Long id) {
-        return wishListService.getItemsById(id);
+    public Page<DtoWishListItemResponse> getItemsById(
+            @PathVariable(name = "id") Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        return wishListService.getItemsById(id, pageable);
     }
 
     @DeleteMapping(path = "/delete/{id}")

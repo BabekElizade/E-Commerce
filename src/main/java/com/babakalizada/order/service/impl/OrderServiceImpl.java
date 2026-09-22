@@ -1,5 +1,8 @@
 package com.babakalizada.order.service.impl;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.cart.entity.Cart;
 import com.babakalizada.cart.repository.ICartRepository;
 import com.babakalizada.common.constant.ErrorMessage;
@@ -114,15 +117,13 @@ public class OrderServiceImpl implements IOrderService {
 
 
     @Override
-    public List<DtoOrderResponse> getMyOrders() {
+    public Page<DtoOrderResponse> getMyOrders(Pageable pageable) {
 
         User user = getCurrentUser();
 
         return orderRepository
-                .findByUser_IdOrderByCreatedAtDesc(user.getId())
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+                .findByUser_IdOrderByCreatedAtDesc(user.getId(), pageable)
+                .map(this::mapToResponse);
     }
 
 

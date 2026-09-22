@@ -1,18 +1,19 @@
 package com.babakalizada.product.sevice;
 
+import org.springframework.data.domain.Page;
 import com.babakalizada.product.dto.request.DtoChangeStatusRequest;
 import com.babakalizada.product.dto.request.DtoProductRequest;
 import com.babakalizada.product.dto.response.DtoProductResponse;
 import com.babakalizada.product.dto.request.DtoUpdateProductRequest;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 
 public interface IProductService {
     DtoProductResponse createProduct(DtoProductRequest request);
 
     DtoProductResponse getProductById(Long id);
 
-    List<DtoProductResponse> getAllProducts();
+    Page<DtoProductResponse> getAllProducts(Pageable pageable);
 
     DtoProductResponse updateProduct(Long id, DtoUpdateProductRequest request);
 
@@ -20,7 +21,7 @@ public interface IProductService {
 
     DtoProductResponse changeProductStatus(Long id, DtoChangeStatusRequest status);
 
-    List<DtoProductResponse> getProductsByCategory(Long categoryId);
+    Page<DtoProductResponse> getProductsByCategory(Long categoryId, Pageable pageable);
 
-    List<DtoProductResponse> searchProducts(String query);
+    Page<DtoProductResponse> searchProducts(String query, Pageable pageable);
 }

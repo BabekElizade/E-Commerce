@@ -106,7 +106,7 @@ public class AuthService implements IAuthService {
                         )
                 );
             }
-            return new DtoLoginResponse(accessToken ,dtoRefreshTokenResponse ,bakuZone ,role);
+            return new DtoLoginResponse(accessToken ,dtoRefreshTokenResponse ,bakuZone);
         } catch (Exception e) {
             System.out.println("Username or Password is wrong!");
         }

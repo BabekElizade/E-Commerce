@@ -1,5 +1,8 @@
 package com.babakalizada.user.service.impl;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.BusinessException;
@@ -18,7 +21,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -33,11 +35,9 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public List<DtoUserResponse> getAllUsers() {
-        return userRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public Page<DtoUserResponse> getAllUsers(Pageable pageable) {
+        return userRepository.findAll(pageable)
+                .map(this::mapToResponse);
     }
 
     @Override
@@ -102,7 +102,7 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     @Override
     public boolean updateUser(Long id, DtoUpdateUserRequest request) {
-        if(request == null) {
+        if (request == null) {
             throw new NullRequestException(
                     new ErrorMessage(
                             ErrorCode.NULL_REQUEST,
@@ -131,14 +131,14 @@ public class UserServiceImpl implements IUserService {
                     )
             );
         }
-        if(request.getFirstName() != null && request.getLastName() != null) {
+        if (request.getFirstName() != null && request.getLastName() != null) {
             targetUser.setFirstName(request.getFirstName());
             targetUser.setLastName(request.getLastName());
         }
-        if(request.getFirstName() != null && request.getLastName() == null) {
+        if (request.getFirstName() != null && request.getLastName() == null) {
             targetUser.setFirstName(request.getFirstName());
         }
-        if(request.getLastName() != null && request.getFirstName() == null) {
+        if (request.getLastName() != null && request.getFirstName() == null) {
             targetUser.setLastName(request.getLastName());
         }
         userRepository.save(targetUser);
@@ -173,7 +173,7 @@ public class UserServiceImpl implements IUserService {
     private User getCurrentUser() {
         String name = SecurityContextHolder.getContext().getAuthentication().getName();
         Optional<User> user = userRepository.findUsersByUsername(name);
-        if(user.isEmpty()) {
+        if (user.isEmpty()) {
             throw new ResourceNotFoundException(
                     new ErrorMessage(
                             ErrorCode.USER_NOT_FOUND,

@@ -1,5 +1,8 @@
 package com.babakalizada.wishlist.service.impl;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.*;
@@ -97,16 +100,14 @@ public class WishListServiceImpl implements IWishListService {
 
     @Transactional
     @Override
-    public List<DtoWishListItemResponse> getItemsById(Long id) {
+    public Page<DtoWishListItemResponse> getItemsById(Long id, Pageable pageable) {
         User user = getCurrentUser();
         WishList wishList = findWishListOrThrow(id);
 
         checkOwnership(wishList, user);
 
-        return wishList.getItems()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return wishListItemRepository.findByWishlist_Id(wishList.getId(), pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional

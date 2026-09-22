@@ -1,5 +1,6 @@
 package com.babakalizada.product.sevice.impl;
 
+import org.springframework.data.domain.Page;
 import com.babakalizada.category.repository.ICategoryRepository;
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
@@ -18,11 +19,11 @@ import com.babakalizada.product.sevice.IProductService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -78,11 +79,9 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<DtoProductResponse> getAllProducts() {
-        return productRepository.findAll()
-                .stream()
-                .map(this::toResponse)
-                .toList();
+    public Page<DtoProductResponse> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable)
+                .map(this::toResponse);
     }
 
     @Transactional
@@ -176,17 +175,15 @@ public class ProductServiceImpl implements IProductService {
     }
 
     @Override
-    public List<DtoProductResponse> getProductsByCategory(Long categoryId) {
+    public Page<DtoProductResponse> getProductsByCategory(Long categoryId, Pageable pageable) {
         validateCategory(categoryId);
 
-        return productRepository.findByCategoryId(categoryId)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return productRepository.findByCategoryId(categoryId, pageable)
+                .map(this::toResponse);
     }
 
     @Override
-    public List<DtoProductResponse> searchProducts(String query) {
+    public Page<DtoProductResponse> searchProducts(String query, Pageable pageable) {
         if (query == null || query.isBlank()) {
             throw new BusinessException(
                     new ErrorMessage(
@@ -196,10 +193,8 @@ public class ProductServiceImpl implements IProductService {
             );
         }
 
-        return searchEngine.search(query)
-                .stream()
-                .map(this::toResponse)
-                .toList();
+        return searchEngine.search(query, pageable)
+                .map(this::toResponse);
     }
 
     private Product findProductOrThrow(Long id) {

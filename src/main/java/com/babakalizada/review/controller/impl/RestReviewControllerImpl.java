@@ -1,5 +1,8 @@
 package com.babakalizada.review.controller.impl;
 
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.PageRequest;
+
 import com.babakalizada.review.controller.IRestReviewController;
 import com.babakalizada.review.dto.request.DtoCreateReviewRequest;
 import com.babakalizada.review.dto.request.DtoUpdateReviewRequest;
@@ -12,7 +15,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/review")
@@ -44,16 +46,32 @@ public class RestReviewControllerImpl implements IRestReviewController {
     @Override
     public Page<DtoReviewResponse> getReviewsByProduct(
             @PathVariable("id") Long productId,
-            Pageable pageable
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
     ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
         return reviewService.getReviewsByProduct(productId, pageable);
     }
 
     @GetMapping("/get-my-reviews")
     @ResponseStatus(HttpStatus.OK)
     @Override
-    public List<DtoReviewResponse> getMyReviews() {
-        return reviewService.getMyReviews();
+    public Page<DtoReviewResponse> getMyReviews(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(
+                page,
+                size,
+                Sort.by(Sort.Direction.DESC, "createdAt")
+        );
+
+        return reviewService.getMyReviews(pageable);
     }
 
     @PatchMapping("/update/{id}")

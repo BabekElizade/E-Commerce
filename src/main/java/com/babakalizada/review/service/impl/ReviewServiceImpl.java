@@ -23,7 +23,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,9 +38,9 @@ public class ReviewServiceImpl implements IReviewService {
     @Override
     public DtoReviewResponse createReview(DtoCreateReviewRequest request) {
         List<Review> listReview = reviewRepository.findByUserId(getCurrentUser().getId());
-        if(!listReview.isEmpty()){
-            for(Review review : listReview){
-                if(review.getProduct().getId().equals(request.getId())){
+        if (!listReview.isEmpty()) {
+            for (Review review : listReview) {
+                if (review.getProduct().getId().equals(request.getId())) {
                     throw new BusinessException(
                             new ErrorMessage(
                                     ErrorCode.REVIEW_ALREADY_EXISTS,
@@ -51,7 +50,7 @@ public class ReviewServiceImpl implements IReviewService {
                 }
             }
         }
-        if(request == null){
+        if (request == null) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -61,7 +60,7 @@ public class ReviewServiceImpl implements IReviewService {
         }
         User user = getCurrentUser();
         Optional<Product> product = productRepository.findById(request.getId());
-        if(product.isEmpty()){
+        if (product.isEmpty()) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -90,7 +89,7 @@ public class ReviewServiceImpl implements IReviewService {
 
     @Override
     public DtoReviewResponse getReviewById(Long id) {
-        if(id < 0){
+        if (id < 0) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -99,7 +98,7 @@ public class ReviewServiceImpl implements IReviewService {
             );
         }
         Optional<Review> review = reviewRepository.findById(id);
-        if(review.isEmpty()){
+        if (review.isEmpty()) {
             throw new ResourceNotFoundException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -124,7 +123,7 @@ public class ReviewServiceImpl implements IReviewService {
             Pageable pageable
     ) {
 
-        if(productId < 0){
+        if (productId < 0) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -159,29 +158,16 @@ public class ReviewServiceImpl implements IReviewService {
     }
 
     @Override
-    public List<DtoReviewResponse> getMyReviews() {
+    public Page<DtoReviewResponse> getMyReviews(Pageable pageable) {
         User user = getCurrentUser();
-        List<Review> reviews = reviewRepository.findByUserId(user.getId());
-        if(reviews.isEmpty()){
-            throw new ResourceNotFoundException(
-                    new ErrorMessage(
-                            ErrorCode.RESOURCE_NOT_FOUND,
-                            "Review resource not found!"
-                    )
-            );
-        }
-        List<DtoReviewResponse> responseList = new ArrayList<>();
-        for(Review review : reviews){
-            DtoReviewResponse dtoReviewResponse = DtoReviewResponse.builder()
-                    .id(review.getId())
-                    .userId(review.getUser().getId())
-                    .productId(review.getProduct().getId())
-                    .rating(review.getRating())
-                    .comment(review.getComment())
-                    .build();
-            responseList.add(dtoReviewResponse);
-        }
-        return responseList;
+        return reviewRepository.findByUserId(user.getId(), pageable)
+                .map(review -> DtoReviewResponse.builder()
+                        .id(review.getId())
+                        .userId(review.getUser().getId())
+                        .productId(review.getProduct().getId())
+                        .rating(review.getRating())
+                        .comment(review.getComment())
+                        .build());
     }
 
     @Override
@@ -191,7 +177,7 @@ public class ReviewServiceImpl implements IReviewService {
             DtoUpdateReviewRequest request
     ) {
 
-        if(id < 0){
+        if (id < 0) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -246,7 +232,7 @@ public class ReviewServiceImpl implements IReviewService {
     @Transactional
     @Override
     public void deleteReview(Long id) {
-        if(id < 0){
+        if (id < 0) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -255,7 +241,7 @@ public class ReviewServiceImpl implements IReviewService {
             );
         }
         Optional<Review> review = reviewRepository.findById(id);
-        if(review.isEmpty()){
+        if (review.isEmpty()) {
             throw new ResourceNotFoundException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
@@ -266,7 +252,7 @@ public class ReviewServiceImpl implements IReviewService {
         reviewRepository.deleteById(id);
     }
 
-    private User getCurrentUser(){
+    private User getCurrentUser() {
         String username = SecurityContextHolder
                 .getContext()
                 .getAuthentication()

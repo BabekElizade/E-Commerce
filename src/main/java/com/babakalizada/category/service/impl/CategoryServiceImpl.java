@@ -1,5 +1,8 @@
 package com.babakalizada.category.service.impl;
 
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Page;
+
 import com.babakalizada.category.dto.response.DtoCategoryResponse;
 import com.babakalizada.category.dto.request.DtoCreateCategoryRequest;
 import com.babakalizada.category.dto.request.DtoUpdateCategoryRequest;
@@ -107,15 +110,9 @@ public class CategoryServiceImpl implements ICategoryService {
     }
 
     @Override
-    public List<DtoCategoryResponse> getAllParentCategories() {
-        List<Category> parents = categoryRepository.findByParentCategoryIsNull();
-        List<DtoCategoryResponse> parentDTOs = new ArrayList<>();
-
-        for (Category parent : parents) {
-            parentDTOs.add(mapToResponse(parent));
-        }
-
-        return parentDTOs;
+    public Page<DtoCategoryResponse> getAllParentCategories(Pageable pageable) {
+        return categoryRepository.findByParentCategoryIsNull(pageable)
+                .map(this::mapToResponse);
     }
 
     @Transactional

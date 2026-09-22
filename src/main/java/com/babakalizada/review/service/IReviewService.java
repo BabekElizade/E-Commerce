@@ -6,7 +6,6 @@ import com.babakalizada.review.dto.response.DtoReviewResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 
 public interface IReviewService {
     DtoReviewResponse createReview(DtoCreateReviewRequest request);
@@ -15,7 +14,7 @@ public interface IReviewService {
 
     Page<DtoReviewResponse> getReviewsByProduct(Long productId, Pageable pageable);
 
-    List<DtoReviewResponse> getMyReviews();
+    Page<DtoReviewResponse> getMyReviews(Pageable pageable);
 
     DtoReviewResponse updateReview(Long id, DtoUpdateReviewRequest request);
 

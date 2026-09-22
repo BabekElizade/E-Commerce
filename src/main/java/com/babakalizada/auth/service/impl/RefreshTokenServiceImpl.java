@@ -62,6 +62,6 @@ public class RefreshTokenServiceImpl implements IRefreshTokenService {
         newRefreshTokenResponse.setFirstName(newRefreshToken.getUser().getFirstName());
         newRefreshTokenResponse.setLastName(newRefreshToken.getUser().getLastName());
 
-        return new DtoLoginResponse(newAccessToken, newRefreshTokenResponse, newRefreshToken.getExpiredDate(), token.get().getUser().getRole());
+        return new DtoLoginResponse(newAccessToken, newRefreshTokenResponse, newRefreshToken.getExpiredDate());
     }
 }
