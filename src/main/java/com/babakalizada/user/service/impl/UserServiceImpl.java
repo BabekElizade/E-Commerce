@@ -42,11 +42,25 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public DtoUserResponse getUsersByUsername(String username) {
+        User currentUser = getCurrentUser();
+
         if (username == null || username.isBlank()) {
             throw new BusinessException(
                     new ErrorMessage(
                             ErrorCode.BUSINESS_ERROR,
                             "Username cannot be empty"
+                    )
+            );
+        }
+
+        boolean isOwner = username.equals(currentUser.getUsername());
+        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new ForbiddenException(
+                    new ErrorMessage(
+                            ErrorCode.FORBIDDEN,
+                            "You are not allowed to perform this action!"
                     )
             );
         }
@@ -64,6 +78,20 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public DtoUserResponse getUserById(Long id) {
+        User currentUser = getCurrentUser();
+
+        boolean isOwner = id.equals(currentUser.getId());
+        boolean isAdmin = currentUser.getRole() == UserRole.ADMIN;
+
+        if (!isOwner && !isAdmin) {
+            throw new ForbiddenException(
+                    new ErrorMessage(
+                            ErrorCode.FORBIDDEN,
+                            "You are not allowed to perform this action!"
+                    )
+            );
+        }
+
         return mapToResponse(findUserOrThrow(id));
     }
 

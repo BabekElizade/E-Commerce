@@ -18,7 +18,9 @@ import com.babakalizada.payment.entity.Payment;
 import com.babakalizada.payment.repository.IPaymentRepository;
 import com.babakalizada.payment.service.IPaymentService;
 import com.babakalizada.product.entity.Product;
+import com.babakalizada.product.enums.ProductStatus;
 import com.babakalizada.user.entity.User;
+import com.babakalizada.user.enums.UserRole;
 import com.babakalizada.user.repository.IUserRepository;
 import com.babakalizada.wallet.entity.Wallet;
 import com.babakalizada.wallet.repository.IWalletRepository;
@@ -110,6 +112,15 @@ public class PaymentServiceImpl implements IPaymentService {
 
             Product product = orderItem.getProduct();
 
+            if(product.getStatus() != ProductStatus.ACTIVE){
+                throw new BusinessException(
+                        new ErrorMessage(
+                                ErrorCode.INVALID_PRODUCT,
+                                "Product not active: " + product.getName()
+                        )
+                );
+            }
+
             if (product.getStock() < orderItem.getQuantity()) {
                 throw new BusinessException(
                         new ErrorMessage(
@@ -131,7 +142,6 @@ public class PaymentServiceImpl implements IPaymentService {
         for (OrderItem orderItem : orderItems) {
 
             Product product = orderItem.getProduct();
-
             product.setStock(
                     product.getStock() - orderItem.getQuantity()
             );
@@ -177,9 +187,9 @@ public class PaymentServiceImpl implements IPaymentService {
     }
 
     @Override
-    public DtoPaymentResponse getPaymentByOrderId(DtoPaymentRequest dtoPaymentRequest) {
+    public DtoPaymentResponse getPaymentByOrderId(Long id) {
         Payment payment = paymentRepository
-                .findByOrder_Id(dtoPaymentRequest.getOrderId())
+                .findByOrder_Id(id)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 new ErrorMessage(
@@ -191,16 +201,20 @@ public class PaymentServiceImpl implements IPaymentService {
 
         User user = getCurrentUser();
 
-        if (!payment.getUser().getId().equals(user.getId())) {
+        boolean isOwner = user.getId().equals(payment.getUser().getId());
+        boolean isAdmin = UserRole.ADMIN.equals(user.getRole());
+
+        if(!isOwner && !isAdmin){
             throw new ForbiddenException(
                     new ErrorMessage(
                             ErrorCode.FORBIDDEN,
-                            "You cannot access this payment"
+                            "You are not allowed to perform this action!"
                     )
             );
         }
+
         DtoPaymentResponse paymentResponse = new DtoPaymentResponse();
-        paymentResponse.setOrderId(dtoPaymentRequest.getOrderId());
+        paymentResponse.setOrderId(id);
         paymentResponse.setPaymentId(payment.getId());
         paymentResponse.setPaymentStatus(payment.getPaymentStatus());
         paymentResponse.setAmount(payment.getAmount());

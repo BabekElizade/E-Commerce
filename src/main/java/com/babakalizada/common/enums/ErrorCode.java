@@ -36,7 +36,10 @@ public enum ErrorCode {
             "TOKEN_EXPIRED",
             "Token expired"
     ),
-
+    ACTIVATION_STATUS_NOT_MATCH(
+      "ACTIVATION_STATUS_NOT_MATCH",
+      "Activation status not match"
+    ),
     PAYMENT_ALREADY_EXISTS(
             "PAYMENT_ALREADY_EXISTS",
             "Payment already exists"
@@ -44,6 +47,14 @@ public enum ErrorCode {
     USER_NOT_FOUND(
             "USER_NOT_FOUND",
             "User not found"
+    ),
+    PASSWORD_MISMATCH(
+            "PASSWORD_MISMATCH",
+            "Passwords do not match"
+    ),
+    DUPLICATE_ACCOUNT(
+            "DUPLICATE_ACCOUNT",
+            "Account already exists"
     ),
     STOCK_NOT_ENOUGH(
             "STOCK_NOT_ENOUGH",
@@ -57,6 +68,10 @@ public enum ErrorCode {
             "INVALID_ORDER_STATUS",
             "Invalid Order Status"
     ),
+    INVALID_PRODUCT(
+            "INVALID_PRODUCT",
+            "Invalid Product"
+    ),
     NULL_REQUEST(
             "NULL_REQUEST",
             "Null Request"
@@ -64,7 +79,8 @@ public enum ErrorCode {
     INVALID_TOKEN(
             "INVALID_TOKEN",
             "Token is invalid"
-    ), RESOURCE_ALREADY_EXISTS(
+    ),
+    RESOURCE_ALREADY_EXISTS(
             "RESOURCE_ALREADY_EXISTS",
             "Resource Already Exist"
     );

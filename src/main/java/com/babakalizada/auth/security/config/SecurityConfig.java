@@ -28,7 +28,7 @@ public class SecurityConfig {
     public static final String[] PUBLIC_AUTH_PATHS = {
             "/login",
             "/register",
-            "/refresh-token"
+            "/refresh_token"
     };
 
     public static final String[] PUBLIC_GET_PATHS = {
@@ -62,7 +62,6 @@ public class SecurityConfig {
 
     public static final String[] ADMIN_GET_PATHS = {
             "/user/list",
-            "/payment/list"
     };
 
     public static final String[] AUTHENTICATED_PATHS = {
@@ -81,6 +80,8 @@ public class SecurityConfig {
             "/review/get-my-reviews",
 
             "/payment/pay/*",
+            "/payment/by-order/*",
+            "/payment/by-order",
             "/orders/**"
     };
 

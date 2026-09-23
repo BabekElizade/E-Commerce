@@ -1,5 +1,6 @@
 package com.babakalizada.order.service.impl;
 
+import com.babakalizada.product.enums.ProductStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 
@@ -80,6 +81,15 @@ public class OrderServiceImpl implements IOrderService {
                                         ErrorCode.INSUFFICIENT_STOCK,
                                         "Not enough stock for product: "
                                                 + cartItem.getProduct().getName()
+                                )
+                        );
+                    }
+
+                    if(cartItem.getProduct().getStatus() != ProductStatus.ACTIVE) {
+                        throw new BusinessException(
+                                new ErrorMessage(
+                                        ErrorCode.INVALID_PRODUCT,
+                                        "Invalid product status: " + cartItem.getProduct().getName()
                                 )
                         );
                     }

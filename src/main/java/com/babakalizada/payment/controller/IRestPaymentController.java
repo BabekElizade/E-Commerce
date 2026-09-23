@@ -7,5 +7,5 @@ public interface IRestPaymentController {
 
     DtoPaymentResponse pay(Long id);
 
-    DtoPaymentResponse getPaymentByOrderId(DtoPaymentRequest dtoPaymentRequest);
+    DtoPaymentResponse getPaymentByOrderId(Long id);
 }

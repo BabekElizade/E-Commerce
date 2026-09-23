@@ -13,8 +13,9 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class DtoCreateReviewRequest {
-    @NotNull(message = "Rating is required")
+    @NotNull(message = "ID cannot be null")
     private Long id;
+    @NotNull(message = "Rating is required")
     private RatingScore rating;
     @NotBlank(message = "Comment cannot be blank")
     @Size(max = 2000)

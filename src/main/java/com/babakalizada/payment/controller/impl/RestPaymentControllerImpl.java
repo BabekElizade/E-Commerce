@@ -25,10 +25,10 @@ public class RestPaymentControllerImpl implements IRestPaymentController {
         return paymentService.pay(id);
     }
 
-    @GetMapping(path = "/list")
+    @GetMapping(path = "/by-order/{orderId}")
     @ResponseStatus(HttpStatus.OK)
     @Override
-    public DtoPaymentResponse getPaymentByOrderId(@Valid @RequestBody DtoPaymentRequest dtoPaymentRequest) {
-        return paymentService.getPaymentByOrderId(dtoPaymentRequest);
+    public DtoPaymentResponse getPaymentByOrderId(@PathVariable(name = "orderId") Long orderId) {
+        return paymentService.getPaymentByOrderId(orderId);
     }
 }

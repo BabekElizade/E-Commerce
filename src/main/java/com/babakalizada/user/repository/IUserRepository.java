@@ -14,4 +14,7 @@ public interface IUserRepository extends JpaRepository<User, Long> {
     SELECT * FROM user WHERE username = :username
 """, nativeQuery = true)
     Optional<User> findUsersByUsername(@Param("username") String username);
+
+    boolean existsByUsername(@Param("username") String username);
+    boolean existsByEmail(@Param("email") String email);
 }

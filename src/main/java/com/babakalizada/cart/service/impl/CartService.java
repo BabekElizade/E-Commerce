@@ -11,8 +11,10 @@ import com.babakalizada.cart.repository.ICartRepository;
 import com.babakalizada.cart.service.ICartService;
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
+import com.babakalizada.common.exception.BusinessException;
 import com.babakalizada.common.exception.ResourceNotFoundException;
 import com.babakalizada.product.entity.Product;
+import com.babakalizada.product.enums.ProductStatus;
 import com.babakalizada.product.repository.IProductRepository;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.repository.IUserRepository;
@@ -48,6 +50,15 @@ public class CartService implements ICartService {
                                 )
                         )
                 );
+
+        if(product.getStatus() != ProductStatus.ACTIVE){
+            throw new BusinessException(
+                    new ErrorMessage(
+                            ErrorCode.INVALID_PRODUCT,
+                            "Invalid product status: " + product.getName()
+                    )
+            );
+        }
 
         String username = SecurityContextHolder
                 .getContext()

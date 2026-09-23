@@ -38,7 +38,7 @@ public class RestAuthControllerImpl implements IRestAuthController {
 
     @PostMapping("/refresh_token")
     @Override
-    public DtoLoginResponse refreshToken(@RequestBody DtoRefreshTokenRequest refreshToken) {
+    public DtoLoginResponse refreshToken(@Valid @RequestBody DtoRefreshTokenRequest refreshToken) {
         return refreshTokenService.refreshToken(refreshToken);
     }
 }

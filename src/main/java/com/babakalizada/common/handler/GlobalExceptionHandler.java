@@ -126,6 +126,26 @@ public class GlobalExceptionHandler {
                 ));
     }
 
+    @ExceptionHandler(PasswordMatchException.class)
+    public ResponseEntity<ApiError<String>> handlePasswordMatchException(PasswordMatchException exception, WebRequest request) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(createApiError(
+                        exception.getMessage(),
+                        request,
+                        HttpStatus.BAD_REQUEST
+                ));
+    }
+
+    @ExceptionHandler(DuplicateAccountException.class)
+    public ResponseEntity<ApiError<String>> handleDuplicateAccountException(DuplicateAccountException exception, WebRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(createApiError(
+                        exception.getMessage(),
+                        request,
+                        HttpStatus.CONFLICT
+                ));
+    }
+
     private String getHostName() {
         try {
             return InetAddress.getLocalHost().getHostName();
@@ -145,7 +165,6 @@ public class GlobalExceptionHandler {
 
         ErrorDetails<E> details = new ErrorDetails<>();
         details.setTimestamp(new Date());
-        details.setHostName(getHostName());
         details.setMessage(message);
         details.setPath(
                 request.getDescription(false).replace("uri=", "")

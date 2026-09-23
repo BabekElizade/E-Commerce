@@ -3,6 +3,7 @@ package com.babakalizada.review.service.impl;
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
 import com.babakalizada.common.exception.BusinessException;
+import com.babakalizada.common.exception.ForbiddenException;
 import com.babakalizada.common.exception.ResourceNotFoundException;
 import com.babakalizada.product.entity.Product;
 import com.babakalizada.product.repository.IProductRepository;
@@ -13,6 +14,7 @@ import com.babakalizada.review.entity.Review;
 import com.babakalizada.review.repository.IReviewRepository;
 import com.babakalizada.review.service.IReviewService;
 import com.babakalizada.user.entity.User;
+import com.babakalizada.user.enums.UserRole;
 import com.babakalizada.user.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -240,12 +242,24 @@ public class ReviewServiceImpl implements IReviewService {
                     )
             );
         }
+        User currentUser = getCurrentUser();
         Optional<Review> review = reviewRepository.findById(id);
         if (review.isEmpty()) {
             throw new ResourceNotFoundException(
                     new ErrorMessage(
                             ErrorCode.RESOURCE_NOT_FOUND,
                             "Review resource not found!"
+                    )
+            );
+        }
+        boolean isOwner = currentUser.getId().equals(review.get().getUser().getId());
+        boolean isAdmin = UserRole.ADMIN.equals(currentUser.getRole());
+
+        if(!isOwner && !isAdmin) {
+            throw new ForbiddenException(
+                    new ErrorMessage(
+                            ErrorCode.FORBIDDEN,
+                            "You are not allowed to perform this action!"
                     )
             );
         }

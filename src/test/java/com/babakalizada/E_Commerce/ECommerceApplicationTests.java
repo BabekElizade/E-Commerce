@@ -1,13 +1,13 @@
 package com.babakalizada.E_Commerce;
 
+import com.babakalizada.starter.ECommerceApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(classes = ECommerceApplication.class)
 class ECommerceApplicationTests {
 
 	@Test
 	void contextLoads() {
 	}
-
 }

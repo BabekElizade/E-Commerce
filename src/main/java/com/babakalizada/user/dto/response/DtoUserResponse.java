@@ -1,7 +1,5 @@
 package com.babakalizada.user.dto.response;
 
-import com.babakalizada.user.enums.UserRole;
-import com.babakalizada.user.enums.UserStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,9 +18,5 @@ public class DtoUserResponse {
     private String firstName;
 
     private String lastName;
-
-    private UserRole role;
-
-    private UserStatus status;
 
 }

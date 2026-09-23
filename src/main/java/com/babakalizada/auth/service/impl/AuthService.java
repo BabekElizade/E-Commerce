@@ -11,8 +11,10 @@ import com.babakalizada.auth.service.IAuthService;
 import com.babakalizada.auth.entity.RefreshToken;
 import com.babakalizada.common.constant.ErrorMessage;
 import com.babakalizada.common.enums.ErrorCode;
+import com.babakalizada.common.exception.DuplicateAccountException;
 import com.babakalizada.common.exception.ForbiddenException;
 import com.babakalizada.common.exception.NullRequestException;
+import com.babakalizada.common.exception.PasswordMatchException;
 import com.babakalizada.user.enums.UserRole;
 import com.babakalizada.user.entity.User;
 import com.babakalizada.user.enums.UserStatus;
@@ -27,7 +29,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.util.Date;
 import java.util.Optional;
 import java.util.UUID;
@@ -54,21 +55,36 @@ public class AuthService implements IAuthService {
                     )
             );
         }
-        if (request.getNewPassword().equals(request.getConfirmPassword())) {
-            User user = User.builder()
-                    .username(request.getUsername())
-                    .password(bCryptPasswordEncoder.encode(request.getNewPassword()))
-                    .email(request.getEmail())
-                    .firstName(request.getFirstName())
-                    .lastName(request.getLastName())
-                    .role(UserRole.USER)
-                    .status(UserStatus.PENDING)
-                    .build();
-            userRepository.save(user);
-            BeanUtils.copyProperties(user, dtoRegisterResponse);
-            return dtoRegisterResponse;
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new PasswordMatchException(
+                    new ErrorMessage(
+                            ErrorCode.PASSWORD_MISMATCH,
+                            "New Password and Confirm Password Do Not Match"
+                    )
+            );
         }
-        return null;
+        User user = User.builder()
+                .username(request.getUsername())
+                .password(bCryptPasswordEncoder.encode(request.getNewPassword()))
+                .email(request.getEmail())
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .role(UserRole.USER)
+                .status(UserStatus.PENDING)
+                .build();
+
+            if(userRepository.existsByUsername(request.getUsername()) || userRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateAccountException(
+                        new ErrorMessage(
+                                ErrorCode.DUPLICATE_ACCOUNT,
+                                "Username or Email Already Exist"
+                        )
+                );
+            }
+
+        userRepository.save(user);
+        BeanUtils.copyProperties(user, dtoRegisterResponse);
+        return dtoRegisterResponse;
     }
 
     public RefreshToken createRefreshToken(User user) {
@@ -82,22 +98,10 @@ public class AuthService implements IAuthService {
     @Transactional
     @Override
     public DtoLoginResponse login(DtoLoginRequest dtoLoginRequest) {
-        try {
+
             UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(dtoLoginRequest.getUsername(), dtoLoginRequest.getPassword());
             authenticationProvider.authenticate(auth);
             Optional<User> user = userRepository.findUsersByUsername(dtoLoginRequest.getUsername());
-            String accessToken = jwtService.generateToken(user.get());
-
-
-            RefreshToken savedRefreshToken =
-                    refreshTokenRepository.save(
-                            createRefreshToken(user.get())
-                    );
-
-            DtoRefreshTokenResponse dtoRefreshTokenResponse = createDtoRefreshTokenResponse(savedRefreshToken);
-
-            Date bakuZone = new Date(jwtService.getExpirationDateByToken(accessToken).getTime() + (4 * 60 * 60 * 1000));
-            UserRole role = user.get().getRole();
             if (user.get().getStatus() != UserStatus.ACTIVE) {
                 throw new ForbiddenException(
                         new ErrorMessage(
@@ -106,11 +110,18 @@ public class AuthService implements IAuthService {
                         )
                 );
             }
-            return new DtoLoginResponse(accessToken ,dtoRefreshTokenResponse ,bakuZone);
-        } catch (Exception e) {
-            System.out.println("Username or Password is wrong!");
-        }
-        return null;
+            String accessToken = jwtService.generateToken(user.get());
+
+            RefreshToken savedRefreshToken =
+                    refreshTokenRepository.save(
+                            createRefreshToken(user.get())
+                    );
+
+            DtoRefreshTokenResponse dtoRefreshTokenResponse = createDtoRefreshTokenResponse(savedRefreshToken);
+
+        Date expiresAt = jwtService.getExpirationDateByToken(accessToken);
+        UserRole role = user.get().getRole();
+        return new DtoLoginResponse(accessToken ,dtoRefreshTokenResponse ,expiresAt);
     }
 
     private static @NonNull DtoRefreshTokenResponse createDtoRefreshTokenResponse(RefreshToken savedRefreshToken) {
