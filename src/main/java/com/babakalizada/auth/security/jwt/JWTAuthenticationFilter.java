@@ -86,7 +86,7 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 throw new InvalidTokenException(
                         new ErrorMessage(
                                 ErrorCode.INVALID_TOKEN,
-                                "Token does not contain a valid username"
+                                "Token does not contain empty valid username"
                         )
                 );
             }

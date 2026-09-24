@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sifarişlərim - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+    <h2>Sifarişlərim</h2>
+    <div id="orders-list" style="margin-top: 1rem;">Yüklənir...</div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { renderPager } from '/assets/js/components/pagination.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { OrdersApi } from '/assets/js/api/orders-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAuth()) return;
+        renderHeader();
+        loadOrders();
+    });
+
+    async function loadOrders(page = 0) {
+        const listEl = document.getElementById('orders-list');
+        try {
+            const res = await OrdersApi.getMyOrders(page, 20);
+            renderPager('orders-list', res, loadOrders);
+            const orders = res.content || [];
+
+            if (orders.length === 0) {
+                listEl.innerHTML = '<p>Sifariş tapılmadı.</p>';
+                return;
+            }
+
+            listEl.innerHTML = `
+          <table style="width:100%; border-collapse: collapse; background:#fff;">
+            <thead>
+              <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 0.8rem;">Sifariş ID</th>
+                <th>Tarix</th>
+                <th>Məbləğ</th>
+                <th>Status</th>
+                <th>Əməliyyat</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orders.map(o => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 0.8rem;">#${o.orderId}</td>
+                  <td>${Formatters.formatDate(o.createdAt)}</td>
+                  <td>${Formatters.formatPrice(o.totalAmount)}</td>
+                  <td><strong>${o.status}</strong></td>
+                  <td><a href="/order-detail.html?id=${o.orderId}">Ətraflı Bax / Ödə</a></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        } catch (err) {
+            listEl.innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+</script>
+</body>
+</html>

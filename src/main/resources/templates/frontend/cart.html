@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Səbətim - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+    <h2>Səbətiniz</h2>
+
+    <div class="banner-gap">
+        Səbətdəki məhsulların siyahısı hazırda göstərilə bilmir. Əlavə etdiyiniz məhsullardan sifariş yarada, sonra sifarişin tərkibini və məbləğini yoxlayaraq ödəniş edə bilərsiniz.
+    </div>
+
+    <div style="margin-top: 2rem; background: #fff; padding: 1.5rem; border: 1px solid #ddd; border-radius: 6px;">
+        <h3>Sifarişi Rəsmiləşdir</h3>
+        <p style="margin: 0.5rem 0; color: #666;">Daha əvvəl səbətə əlavə etdiyiniz məhsullardan sifariş yaratmaq üçün aşağıdakı düyməni sıxın.</p>
+        <button id="checkout-btn" class="btn-primary-sm" style="padding: 0.8rem 1.5rem; font-size: 1rem;">Sifariş Yarat</button>
+    </div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { OrdersApi } from '/assets/js/api/orders-api.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAuth()) return;
+        renderHeader();
+
+        document.getElementById('checkout-btn').addEventListener('click', handleCheckout);
+    });
+
+    async function handleCheckout(e) {
+        const btn = e.target;
+        btn.disabled = true;
+        btn.textContent = 'İşlənir...';
+
+        try {
+            const order = await OrdersApi.createOrder();
+            Toast.success(`Sifariş #${order.orderId} yaradıldı!`);
+            window.location.href = `/order-detail.html?id=${order.orderId}`;
+        } catch (err) {
+            Toast.error(err.message);
+            btn.disabled = false;
+            btn.textContent = 'Sifariş Yarat';
+        }
+    }
+</script>
+</body>
+</html>

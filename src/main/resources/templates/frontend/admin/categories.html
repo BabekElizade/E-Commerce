@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kateqoriyalar (Admin) - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+    <h2>Kateqoriya İdarəetməsi</h2>
+
+    <form id="create-cat-form" style="background: #fff; padding: 1rem; border: 1px solid #ddd; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 400px;">
+        <h3>Yeni Kateqoriya Yaradın</h3>
+        <input type="text" id="cat-name" placeholder="Kateqoriya adı" required style="padding: 0.4rem;">
+        <textarea id="cat-desc" placeholder="Təsvir" style="padding: 0.4rem;"></textarea>
+        <input type="number" id="cat-parent" min="1" step="1" aria-label="Valideyn kateqoriya ID" placeholder="Valideyn ID (boş ola bilər)" style="padding: 0.4rem;">
+        <button type="submit" class="btn-primary-sm">Yarat</button>
+    </form>
+
+    <h3 style="margin-top: 2rem;">Mövcud Ana Kateqoriyalar</h3>
+    <div id="cat-tree" style="margin-top: 1rem;">Yüklənir...</div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { renderPager } from '/assets/js/components/pagination.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { CategoriesApi } from '/assets/js/api/categories-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAdmin()) return;
+        renderHeader();
+        loadCategoriesTree();
+
+        document.getElementById('create-cat-form').addEventListener('submit', handleCreateCategory);
+    });
+
+    async function loadCategoriesTree(page = 0) {
+        const container = document.getElementById('cat-tree');
+        try {
+            const res = await CategoriesApi.getParentCategories(page, 50);
+            renderPager('cat-tree', res, loadCategoriesTree);
+            const categories = res.content || [];
+
+            if (categories.length === 0) {
+                container.innerHTML = '<p>Kateqoriya tapılmadı.</p>';
+                return;
+            }
+
+            container.innerHTML = '<ul>' + categories.map(c => renderCategoryNode(c)).join('') + '</ul>';
+
+            document.querySelectorAll('.del-cat-btn').forEach(b => {
+                b.addEventListener('click', async (e) => {
+                    const id = e.target.dataset.id;
+                    if (!confirm('Kateqoriyanı silmək istəyirsiniz?')) return;
+                    try {
+                        await CategoriesApi.delete(id);
+                        Toast.info('Kateqoriya silindi');
+                        loadCategoriesTree();
+                    } catch (err) {
+                        Toast.error(err.message);
+                    }
+                });
+            });
+        } catch (err) {
+            container.innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+
+    function renderCategoryNode(cat) {
+        const hasSubs = cat.subCategories && cat.subCategories.length > 0;
+        return `
+        <li style="margin: 0.5rem 0;">
+          <strong>#${cat.id} - ${Formatters.escapeHtml(cat.name)}</strong>
+          <button class="del-cat-btn" data-id="${cat.id}" style="color:red; margin-left: 0.5rem;">Sil</button>
+          ${hasSubs ? `<ul>${cat.subCategories.map(s => renderCategoryNode(s)).join('')}</ul>` : ''}
+        </li>
+      `;
+    }
+
+    async function handleCreateCategory(e) {
+        e.preventDefault();
+        const name = document.getElementById('cat-name').value.trim();
+        const description = document.getElementById('cat-desc').value.trim();
+        const parentVal = document.getElementById('cat-parent').value;
+        const parentCategoryId = parentVal ? parseInt(parentVal, 10) : null;
+        if (!name) {
+            Toast.error('Kateqoriya adını daxil edin.');
+            return;
+        }
+        const button = e.currentTarget.querySelector('button[type="submit"]');
+        if (button.disabled) return;
+        button.disabled = true;
+
+        try {
+            await CategoriesApi.create({ name, description, parentCategoryId });
+            Toast.success('Kateqoriya yaradıldı');
+            document.getElementById('create-cat-form').reset();
+            loadCategoriesTree();
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            button.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

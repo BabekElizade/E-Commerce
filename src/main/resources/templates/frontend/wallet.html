@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pul Qabı - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+    <h2>Pul Qabı Balansı</h2>
+    <div id="wallet-info" style="margin-top: 1rem; background: #fff; padding: 1.5rem; border: 1px solid #ddd; border-radius: 6px;">
+        Yüklənir...
+    </div>
+
+    <div style="margin-top: 2rem;">
+        <h3>Əməliyyat Tarixçəsi</h3>
+        <div id="transactions-list" style="margin-top: 1rem;">Yüklənir...</div>
+    </div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { renderPager } from '/assets/js/components/pagination.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { WalletApi } from '/assets/js/api/wallet-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAuth()) return;
+        renderHeader();
+        loadWallet();
+        loadTransactions();
+    });
+
+    async function loadWallet() {
+        const infoEl = document.getElementById('wallet-info');
+        try {
+            const w = await WalletApi.getWallet();
+            infoEl.innerHTML = `
+          <p>Cari Balans: <strong style="font-size: 1.5rem; color: var(--primary-color);">${Formatters.formatPrice(w.balance, w.currency)}</strong></p>
+          <p>Valyuta: <strong>${w.currency}</strong> | Status: <strong>${w.status}</strong></p>
+
+          <div style="margin-top: 1.5rem; border-top: 1px solid #eee; padding-top: 1rem;">
+            <h4>Balansı artır</h4>
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem;">
+              <input type="number" id="topup-amount" aria-label="Artırılacaq məbləğ" value="50.00" min="0.01" step="0.01" required style="padding: 0.4rem;">
+              <button id="topup-btn" class="btn-primary-sm">Balans Artır</button>
+            </div>
+            <small style="color: #666;">Bu funksiya hazırda yalnız sınaq rejimində əlçatandır.</small>
+          </div>
+        `;
+
+            document.getElementById('topup-btn').addEventListener('click', handleTopUp);
+        } catch (err) {
+            infoEl.innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+
+    async function handleTopUp() {
+        const input = document.getElementById('topup-amount');
+        if (!input.reportValidity()) return;
+        const amount = Number(input.value);
+        if (!Number.isFinite(amount) || amount <= 0) {
+            Toast.error('Düzgün məbləğ daxil edin');
+            return;
+        }
+
+        const button = document.getElementById('topup-btn');
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+            await WalletApi.initiateTopUp(amount);
+            Toast.success('Test balans artırıldı!');
+            loadWallet();
+            loadTransactions();
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function loadTransactions(page = 0) {
+        const listEl = document.getElementById('transactions-list');
+        try {
+            const res = await WalletApi.getTransactions(page, 10);
+            renderPager('transactions-list', res, loadTransactions);
+            const txs = res.content || [];
+
+            if (txs.length === 0) {
+                listEl.innerHTML = '<p>Heç bir əməliyyat tapılmadı.</p>';
+                return;
+            }
+
+            listEl.innerHTML = `
+          <table style="width:100%; border-collapse: collapse; background:#fff;">
+            <thead>
+              <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 0.5rem;">Növ</th>
+                <th>Məbləğ</th>
+                <th>Balans Sonrası</th>
+                <th>Status</th>
+                <th>Tarix</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${txs.map(t => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 0.5rem;">${t.type}</td>
+                  <td>${Formatters.formatPrice(t.amount)}</td>
+                  <td>${Formatters.formatPrice(t.balanceAfter)}</td>
+                  <td>${t.status}</td>
+                  <td>${Formatters.formatDate(t.createdAt)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+        } catch (err) {
+            listEl.innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+</script>
+</body>
+</html>

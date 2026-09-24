@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Məhsul Təfərrüatı - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" id="product-container" style="margin-top: 2rem;">
+    Yüklənir...
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { renderPager } from '/assets/js/components/pagination.js';
+    import { ProductsApi } from '/assets/js/api/products-api.js';
+    import { CartApi } from '/assets/js/api/cart-api.js';
+    import { ReviewsApi } from '/assets/js/api/reviews-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+    import { Toast } from '/assets/js/components/toast.js';
+    import { Auth } from '/assets/js/core/auth.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const productId = params.get('id');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderHeader();
+        if (!productId) {
+            document.getElementById('product-container').innerHTML = 'Məhsul ID tapılmadı.';
+            return;
+        }
+        loadProduct();
+    });
+
+    async function loadProduct() {
+        try {
+            const p = await ProductsApi.getById(productId);
+            const container = document.getElementById('product-container');
+
+            container.innerHTML = `
+          <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+            <img src="/assets/images/product-placeholder.svg" style="width: 300px; height: 300px; background: #eee;" alt="Placeholder">
+            <div style="flex: 1;">
+              <h2>${Formatters.escapeHtml(p.name)}</h2>
+              <p style="margin: 0.5rem 0; color: #666;">Status: <strong>${p.status}</strong></p>
+              <h3 style="color: var(--primary-color); font-size: 1.8rem;">${Formatters.formatPrice(p.price)}</h3>
+              <p style="margin: 1rem 0;">${Formatters.escapeHtml(p.description)}</p>
+
+              <div style="display: flex; gap: 1rem; align-items: center; margin-top: 1.5rem;">
+                <input type="number" id="qty-input" aria-label="Miqdar" value="1" min="1" max="2147483647" step="1" required style="width: 80px; padding: 0.5rem;">
+                <button id="add-cart-btn" class="btn-primary-sm" ${p.status !== 'ACTIVE' ? 'disabled' : ''}>Səbətə Əlavə Et</button>
+              </div>
+            </div>
+          </div>
+
+          <hr style="margin: 2rem 0; border: none; border-top: 1px solid #ddd;">
+
+          <section id="reviews-section">
+            <h3>Rəylər</h3>
+            ${Auth.isAuthenticated() ? `
+              <form id="review-form" style="margin: 1rem 0; max-width: 500px;">
+                <label>Qiymətləndirmə:
+                  <select id="rating-select" style="padding: 0.4rem; margin-bottom: 0.5rem;">
+                    <option value="FIVE">5 Ulduz</option>
+                    <option value="FOUR">4 Ulduz</option>
+                    <option value="THREE">3 Ulduz</option>
+                    <option value="TWO">2 Ulduz</option>
+                    <option value="ONE">1 Ulduz</option>
+                  </select>
+                </label>
+                <textarea id="comment-input" maxlength="2000" placeholder="Rəyinizi yazın..." required style="width:100%; height:80px; padding: 0.5rem; display:block; margin-bottom:0.5rem;"></textarea>
+                <button type="submit" class="btn-primary-sm">Rəy Göndər</button>
+              </form>
+            ` : '<p><a href="/login.html">Rəy yazmaq üçün daxil olun.</a></p>'}
+
+            <div id="reviews-list" style="margin-top: 1rem;">Yüklənir...</div>
+          </section>
+        `;
+
+            document.getElementById('add-cart-btn')?.addEventListener('click', addToCart);
+            document.getElementById('review-form')?.addEventListener('submit', handleReviewSubmit);
+
+            loadReviews();
+        } catch (err) {
+            document.getElementById('product-container').innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+
+    async function addToCart() {
+        if (!Auth.isAuthenticated()) {
+            window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
+            return;
+        }
+        const input = document.getElementById('qty-input');
+        if (!input.reportValidity()) return;
+        const qty = Number(input.value);
+        if (!Number.isInteger(qty) || qty < 1) return;
+        const button = document.getElementById('add-cart-btn');
+        if (button.disabled) return;
+        button.disabled = true;
+        try {
+            await CartApi.add(productId, qty);
+            Toast.success('Məhsul səbətə əlavə edildi');
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function loadReviews(page = 0) {
+        try {
+            const res = await ReviewsApi.getByProduct(productId, page, 10);
+            renderPager('reviews-list', res, loadReviews);
+            const listEl = document.getElementById('reviews-list');
+            if (!res.content || res.content.length === 0) {
+                listEl.innerHTML = '<p>Hələ rəy yazılmayıb.</p>';
+                return;
+            }
+
+            listEl.innerHTML = res.content.map(r => `
+          <div style="border-bottom: 1px solid #eee; padding: 0.5rem 0;">
+            <strong>Qiymətləndirmə: ${r.rating}</strong>
+            <p>${Formatters.escapeHtml(r.comment)}</p>
+          </div>
+        `).join('');
+        } catch (e) {
+            document.getElementById('reviews-list').innerHTML = 'Rəylər yüklənə bilmədi.';
+        }
+    }
+
+    async function handleReviewSubmit(e) {
+        e.preventDefault();
+        const rating = document.getElementById('rating-select').value;
+        const comment = document.getElementById('comment-input').value.trim();
+        if (!comment) {
+            Toast.error('Rəyinizi daxil edin.');
+            return;
+        }
+        const button = e.currentTarget.querySelector('button[type="submit"]');
+        if (button.disabled) return;
+        button.disabled = true;
+
+        try {
+            await ReviewsApi.create(productId, rating, comment);
+            Toast.success('Rəyiniz əlavə olundu');
+            document.getElementById('comment-input').value = '';
+            loadReviews();
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            button.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

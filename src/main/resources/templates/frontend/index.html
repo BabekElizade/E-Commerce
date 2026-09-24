@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce - Ana Səhifə</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+</head>
+<body>
+<header id="main-header"></header>
+
+<main class="container">
+    <section class="search-section" style="margin: 1rem 0; display: flex; gap: 1rem;">
+        <input type="search" id="search-input" aria-label="Məhsul axtar" placeholder="Məhsul axtar..." style="flex: 1; padding: 0.5rem;">
+        <select id="category-select" aria-label="Kateqoriya" style="padding: 0.5rem;">
+            <option value="">Bütün Kateqoriyalar</option>
+        </select>
+    </section>
+
+    <div id="product-list" class="product-grid"></div>
+    <div id="pagination" class="pagination"></div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { ProductsApi } from '/assets/js/api/products-api.js';
+    import { CategoriesApi } from '/assets/js/api/categories-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+
+    let currentPage = 0;
+    let currentMode = 'LIST'; // LIST, SEARCH, CATEGORY
+    let activeQuery = '';
+    let activeCategoryId = null;
+    let searchAbortController = null;
+    let requestVersion = 0;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderHeader();
+        loadCategories();
+        loadProducts(0);
+
+        document.getElementById('search-input').addEventListener('input', handleSearch);
+        document.getElementById('category-select').addEventListener('change', handleCategoryChange);
+    });
+
+    async function loadCategories() {
+        try {
+            const categories = await CategoriesApi.getAllParentCategories();
+            const select = document.getElementById('category-select');
+            function appendCategory(cat, depth = 0) {
+                const opt = document.createElement('option');
+                opt.value = cat.id;
+                opt.textContent = '— '.repeat(depth) + cat.name;
+                select.appendChild(opt);
+                (cat.subCategories || []).forEach(child => appendCategory(child, depth + 1));
+            }
+            categories.forEach(cat => appendCategory(cat));
+        } catch {
+            const select = document.getElementById('category-select');
+            select.options[0].textContent = 'Kateqoriyalar yüklənmədi';
+            select.disabled = true;
+        }
+    }
+
+    async function loadProducts(page = 0) {
+        const version = ++requestVersion;
+        searchAbortController?.abort();
+        searchAbortController = new AbortController();
+        currentPage = page;
+        const listEl = document.getElementById('product-list');
+        listEl.innerHTML = 'Yüklənir...';
+        document.getElementById('pagination').replaceChildren();
+
+        try {
+            let res;
+            if (currentMode === 'SEARCH') {
+                res = await ProductsApi.search(activeQuery, currentPage, 10, searchAbortController.signal);
+            } else if (currentMode === 'CATEGORY') {
+                res = await ProductsApi.getByCategory(activeCategoryId, currentPage, 10);
+            } else {
+                res = await ProductsApi.getList(currentPage, 10);
+            }
+
+            if (version !== requestVersion) return;
+            renderProducts(res.content || []);
+            renderPagination(res.totalPages || 0);
+        } catch (err) {
+            if (err.name === 'AbortError' || version !== requestVersion) return;
+            listEl.innerHTML = `<p class="error">${Formatters.escapeHtml(err.message)}</p>`;
+        }
+    }
+
+    function renderProducts(products) {
+        const listEl = document.getElementById('product-list');
+        if (products.length === 0) {
+            listEl.innerHTML = '<p>Heç bir məhsul tapılmadı.</p>';
+            return;
+        }
+
+        listEl.innerHTML = products.map(p => `
+        <div class="product-card">
+          <img src="/assets/images/product-placeholder.svg" alt="${Formatters.escapeHtml(p.name)}" class="product-img">
+          <span class="badge badge-${p.status ? p.status.toLowerCase() : 'active'}">${p.status}</span>
+          <h3 class="product-title">${Formatters.escapeHtml(p.name)}</h3>
+          <p class="product-price">${Formatters.formatPrice(p.price)}</p>
+          <a href="/product.html?id=${p.id}" class="btn-primary-sm" style="text-align: center; margin-top: 1rem;">Ətraflı Bax</a>
+        </div>
+      `).join('');
+    }
+
+    function renderPagination(totalPages) {
+        const pagEl = document.getElementById('pagination');
+        pagEl.innerHTML = '';
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.textContent = i + 1;
+            if (i === currentPage) btn.classList.add('active');
+            btn.addEventListener('click', () => loadProducts(i));
+            pagEl.appendChild(btn);
+        }
+    }
+
+    let searchTimeout;
+    function handleSearch(e) {
+        clearTimeout(searchTimeout);
+        requestVersion++;
+        searchAbortController?.abort();
+        const query = e.target.value.trim();
+        searchTimeout = setTimeout(() => {
+            if (query.length > 0) {
+                currentMode = 'SEARCH';
+                activeQuery = query;
+                document.getElementById('category-select').value = '';
+            } else {
+                currentMode = 'LIST';
+            }
+            loadProducts(0);
+        }, 400);
+    }
+
+    function handleCategoryChange(e) {
+        clearTimeout(searchTimeout);
+        const catId = e.target.value;
+        document.getElementById('search-input').value = '';
+        if (catId) {
+            currentMode = 'CATEGORY';
+            activeCategoryId = catId;
+        } else {
+            currentMode = 'LIST';
+        }
+        loadProducts(0);
+    }
+</script>
+</body>
+</html>

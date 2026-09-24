@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daxil Ol - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="max-width: 400px; margin-top: 3rem;">
+    <h2>Sistemə Giriş</h2>
+    <form id="login-form" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+        <label>
+            İstifadəçi adı (Username):
+            <input type="text" id="username" name="username" autocomplete="username" required style="width: 100%; padding: 0.5rem;">
+        </label>
+        <label>
+            Şifrə:
+            <input type="password" id="password" name="password" autocomplete="current-password" required style="width: 100%; padding: 0.5rem;">
+        </label>
+        <button type="submit" id="submit-btn" class="btn-primary-sm" style="padding: 0.7rem;">Daxil Ol</button>
+    </form>
+    <p style="margin-top: 1rem;">Hesabınız yoxdur? <a href="/register.html">Qeydiyyatdan keçin</a></p>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { AuthApi } from '/assets/js/api/auth-api.js';
+    import { Storage } from '/assets/js/core/storage.js';
+    import { Auth } from '/assets/js/core/auth.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderHeader();
+        document.getElementById('login-form').addEventListener('submit', handleLogin);
+    });
+
+    async function handleLogin(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        if (!username) {
+            Toast.error('İstifadəçi adını daxil edin.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Gözləyin...';
+
+        try {
+            const res = await AuthApi.login({ username, password });
+            Storage.setSession(res);
+
+            Toast.success('Uğurla daxil oldunuz');
+
+            const params = new URLSearchParams(window.location.search);
+            const redirect = params.get('redirect');
+            window.location.href = Auth.safeRedirect(redirect);
+        } catch (err) {
+            Toast.error(err.message);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Daxil Ol';
+        }
+    }
+</script>
+</body>
+</html>

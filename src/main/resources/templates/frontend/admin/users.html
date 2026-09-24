@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>İstifadəçilər (Admin) - E-Commerce</title>
+  <link rel="stylesheet" href="/assets/css/variables.css">
+  <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+  <h2>İstifadəçi Siyahısı</h2>
+  <div id="users-list" style="margin-top: 1rem;">Yüklənir...</div>
+</main>
+
+<script type="module">
+  import { renderHeader } from '/assets/js/components/header.js';
+    import { renderPager } from '/assets/js/components/pagination.js';
+  import { Guards } from '/assets/js/core/guards.js';
+  import { UsersApi } from '/assets/js/api/users-api.js';
+  import { Formatters } from '/assets/js/core/formatters.js';
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!Guards.requireAdmin()) return;
+    renderHeader();
+    loadUsers();
+  });
+
+  async function loadUsers(page = 0) {
+    const container = document.getElementById('users-list');
+    try {
+      const res = await UsersApi.getUsersAdmin(page, 20);
+            renderPager('users-list', res, loadUsers);
+      const users = res.content || [];
+
+      container.innerHTML = `
+          <table style="width:100%; border-collapse: collapse; background:#fff;">
+            <thead>
+              <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 0.5rem;">ID</th>
+                <th>Username</th>
+                <th>E-poçt</th>
+                <th>Ad / Soyad</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(u => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 0.5rem;">${u.id}</td>
+                  <td>${Formatters.escapeHtml(u.username)}</td>
+                  <td>${Formatters.escapeHtml(u.email)}</td>
+                  <td>${Formatters.escapeHtml(u.firstName)} ${Formatters.escapeHtml(u.lastName)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+    } catch (err) {
+      container.innerHTML = Formatters.escapeHtml(err.message);
+    }
+  }
+</script>
+</body>
+</html>

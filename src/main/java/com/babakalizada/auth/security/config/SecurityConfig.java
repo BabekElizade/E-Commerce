@@ -104,6 +104,8 @@ public class SecurityConfig {
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(SWAGGER_PATHS).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/", "/*.html", "/admin/*.html", "/assets/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/", "/*.html", "/admin/*.html", "/assets/**").permitAll()
 
                         .requestMatchers(HttpMethod.POST, PUBLIC_AUTH_PATHS).permitAll()
 

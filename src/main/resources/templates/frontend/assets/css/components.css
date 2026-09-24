@@ -1,0 +1,78 @@
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+.product-card {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: 1.15rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.product-card:focus-within {
+    border-color: #81b6a7;
+    box-shadow: 0 8px 28px #1b433214;
+}
+@media (hover: hover) {
+    .product-card:hover {
+        transform: translateY(-4px);
+        border-color: #b5d2c7;
+        box-shadow: 0 12px 32px #1b433214;
+    }
+}
+.product-img {
+    width: 100%;
+    height: 210px;
+    object-fit: contain;
+    background: #f0f5f2;
+    border-radius: 12px;
+    margin-bottom: 1rem;
+}
+.product-title { font-size: 1.1rem; line-height: 1.45; margin-bottom: 0.6rem; }
+.product-price {
+    font-weight: 750;
+    color: var(--text-color);
+    font-size: 1.4rem;
+    letter-spacing: -0.04em;
+    margin-top: auto;
+    font-variant-numeric: tabular-nums;
+}
+.badge {
+    display: inline-block;
+    width: fit-content;
+    padding: 0.25rem 0.65rem;
+    margin-bottom: 0.7rem;
+    border-radius: 100px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.035em;
+}
+.badge-active { background: #e5f5eb; color: #166534; }
+.badge-inactive { background: #fff1f2; color: #9f1239; }
+.badge-out, .badge-out_of_stock { background: #fef3c7; color: #92400e; }
+.pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    justify-content: center;
+    margin: 2.5rem 0;
+}
+.pagination button { min-width: 44px; border-radius: 10px; }
+.pagination button.active { background: var(--primary-color); border-color: var(--primary-color); color: #fff; }
+.pagination button.active:hover { background: var(--primary-hover); }
+.banner-gap {
+    background: #fffaf0;
+    color: #79521e;
+    border: 1px solid #f0dfba;
+    border-left: 4px solid #d4a54c;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    font-size: 0.93rem;
+}

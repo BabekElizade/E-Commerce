@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sifariş Təfərrüatı - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" id="order-container" style="margin-top: 2rem;">
+    Yüklənir...
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { OrdersApi } from '/assets/js/api/orders-api.js';
+    import { PaymentsApi } from '/assets/js/api/payments-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    const params = new URLSearchParams(window.location.search);
+    const orderId = params.get('id');
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAuth()) return;
+        renderHeader();
+        if (!orderId) {
+            document.getElementById('order-container').innerHTML = 'Sifariş ID göstərilməyib.';
+            return;
+        }
+        loadOrderDetail();
+    });
+
+    async function loadOrderDetail() {
+        try {
+            const o = await OrdersApi.getMyOrderById(orderId);
+            const container = document.getElementById('order-container');
+
+            container.innerHTML = `
+            <div style="
+            height: 100%;
+            width: 25vh;
+            background-color: #103b35;
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            color: white;
+            padding: 5px;
+            ">
+                <h2>Sifariş #${o.orderId}</h2>
+            </div>
+          <p>Tarix: ${Formatters.formatDate(o.createdAt)}</p>
+          <p>Status: <strong>${o.status}</strong></p>
+          <p>Ümumi Məbləğ: <strong>${Formatters.formatPrice(o.totalAmount)}</strong></p>
+
+          <h3 style="margin-top: 1.5rem;">Məhsullar</h3>
+          <ul style="margin-top: 0.5rem; padding-left: 1.2rem;">
+            ${(o.items || []).map(i => `
+              <li>${Formatters.escapeHtml(i.productName)} -${i.quantity} ədəd x ${Formatters.formatPrice(i.price)} =${Formatters.formatPrice(i.totalPrice)}</li>
+            `).join('')}
+          </ul>
+
+          <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            ${o.status === 'PENDING' ? `
+              <button id="pay-btn" class="btn-primary-sm" style="padding: 0.6rem 1.2rem;">Pul Qabı Balansı ilə Ödə</button>
+              <button id="cancel-btn" class="btn-link">Sifarişi Ləğv Et</button>
+            ` : ''}
+          </div>
+        `;
+
+            document.getElementById('pay-btn')?.addEventListener('click', handlePayment);
+            document.getElementById('cancel-btn')?.addEventListener('click', handleCancel);
+        } catch (err) {
+            document.getElementById('order-container').innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+
+    async function handlePayment(e) {
+        const btn = e.target;
+        btn.disabled = true;
+        btn.textContent = 'Ödəniş İşlənir...';
+
+        try {
+            await PaymentsApi.payOrder(orderId);
+            Toast.success('Ödəniş uğurla tamamlandı!');
+            loadOrderDetail();
+        } catch (err) {
+            Toast.error(err.message);
+            btn.disabled = false;
+            btn.textContent = 'Pul Qabı Balansı ilə Ödə';
+        }
+    }
+
+    async function handleCancel() {
+        if (!confirm('Sifarişi ləğv etməyə əminsiniz?')) return;
+        try {
+            await OrdersApi.cancelOrder(orderId);
+            Toast.info('Sifariş ləğv edildi.');
+            loadOrderDetail();
+        } catch (err) {
+            Toast.error(err.message);
+        }
+    }
+</script>
+</body>
+</html>

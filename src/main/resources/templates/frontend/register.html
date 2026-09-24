@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Qeydiyyat - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="max-width: 450px; margin-top: 2rem;">
+    <h2>Qeydiyyat</h2>
+    <form id="register-form" style="display: flex; flex-direction: column; gap: 0.8rem; margin-top: 1rem;">
+        <label>İstifadəçi adı: <input type="text" id="username" required style="width:100%; padding: 0.4rem;"></label>
+        <label>Ad: <input type="text" id="firstName" required style="width:100%; padding: 0.4rem;"></label>
+        <label>Soyad: <input type="text" id="lastName" required style="width:100%; padding: 0.4rem;"></label>
+        <label>E-poçt: <input type="email" id="email" required style="width:100%; padding: 0.4rem;"></label>
+        <label>Şifrə (min 8 simvol): <input type="password" id="newPassword" minlength="8" required style="width:100%; padding: 0.4rem;"></label>
+        <label>Şifrə təkrarı: <input type="password" id="confirmPassword" minlength="8" required style="width:100%; padding: 0.4rem;"></label>
+        <button type="submit" id="submit-btn" class="btn-primary-sm" style="padding: 0.6rem;">Qeydiyyatdan Keç</button>
+    </form>
+    <div id="status-message" style="margin-top: 1rem;"></div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { AuthApi } from '/assets/js/api/auth-api.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        renderHeader();
+        document.getElementById('register-form').addEventListener('submit', handleRegister);
+    });
+
+    async function handleRegister(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submit-btn');
+
+        const username = document.getElementById('username').value.trim();
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+        if (![username, firstName, lastName, email, newPassword.trim()].every(Boolean)) {
+            Toast.error('Bütün sahələri doldurun.');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            Toast.error('Şifrələr üst-üstə düşmür.');
+            return;
+        }
+
+        submitBtn.disabled = true;
+
+        try {
+            await AuthApi.register({ username, firstName, lastName, email, newPassword, confirmPassword });
+            document.getElementById('register-form').reset();
+            document.getElementById('status-message').innerHTML = `
+          <div style="background: #e0f2fe; padding: 1rem; border-radius: 4px; color: #0369a1;">
+            Hesab yaradıldı! Hesabınız <strong>PENDING</strong> statusundadır. Sistem inzibatçısı tərəfindən aktivləşdirildikdən sonra daxil ola bilərsiniz.
+          </div>
+        `;
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            submitBtn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>

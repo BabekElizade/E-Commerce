@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İstək siyahısı - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container">
+    <h1>İstək siyahısı</h1>
+    <p style="margin: 1rem 0;">İstək siyahınız hazırda göstərilə bilmir. Bu funksiya hələ istifadəyə hazır deyil.</p>
+    <a href="/index.html" class="btn-primary-sm">Məhsullara bax</a>
+</main>
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    if (Guards.requireAuth()) renderHeader();
+</script>
+</body>
+</html>

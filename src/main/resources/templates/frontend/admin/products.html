@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Məhsullar (Admin) - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+    <h2>Məhsulların İdarə Edilməsi</h2>
+
+    <form id="create-product-form" style="background: #fff; padding: 1rem; border: 1px solid #ddd; margin-top: 1rem; display: flex; flex-direction: column; gap: 0.5rem; max-width: 500px;">
+        <h3>Yeni Məhsul Əlavə Et</h3>
+        <input type="text" id="p-name" placeholder="Məhsul adı" required style="padding: 0.4rem;">
+        <textarea id="p-desc" placeholder="Təsvir" required style="padding: 0.4rem;"></textarea>
+        <input type="number" id="p-price" min="0.01" step="0.01" aria-label="Qiymət" placeholder="Qiymət" required style="padding: 0.4rem;">
+        <input type="number" id="p-stock" min="0" max="2147483647" step="1" aria-label="Stok" placeholder="Stok (tam ədəd)" required style="padding: 0.4rem;">
+        <input type="text" id="p-sku" placeholder="SKU kodu" required style="padding: 0.4rem;">
+        <input type="number" id="p-catid" min="1" step="1" aria-label="Kateqoriya ID" placeholder="Kateqoriya ID" required style="padding: 0.4rem;">
+        <button type="submit" class="btn-primary-sm">Yarat</button>
+    </form>
+
+    <h3 style="margin-top: 2rem;">Məhsul Siyahısı</h3>
+    <div id="admin-products-list" style="margin-top: 1rem;">Yüklənir...</div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { renderPager } from '/assets/js/components/pagination.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { ProductsApi } from '/assets/js/api/products-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAdmin()) return;
+        renderHeader();
+        loadAdminProducts();
+
+        document.getElementById('create-product-form').addEventListener('submit', handleCreateProduct);
+    });
+
+    async function loadAdminProducts(page = 0) {
+        const listEl = document.getElementById('admin-products-list');
+        try {
+            const res = await ProductsApi.getList(page, 50);
+            renderPager('admin-products-list', res, loadAdminProducts);
+            const products = res.content || [];
+
+            listEl.innerHTML = `
+          <table style="width:100%; border-collapse: collapse; background:#fff;">
+            <thead>
+              <tr style="border-bottom: 2px solid #ddd; text-align: left;">
+                <th style="padding: 0.5rem;">ID</th>
+                <th>Ad</th>
+                <th>Qiymət</th>
+                <th>Status</th>
+                <th>Əməliyyatlar</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${products.map(p => `
+                <tr style="border-bottom: 1px solid #eee;">
+                  <td style="padding: 0.5rem;">${p.id}</td>
+                  <td>${Formatters.escapeHtml(p.name)}</td>
+                  <td>${Formatters.formatPrice(p.price)}</td>
+                  <td>${p.status}</td>
+                  <td>
+                    <button class="status-btn" data-id="${p.id}" data-status="${p.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE'}">Statusu Dəyiş</button>
+                    <button class="delete-btn" data-id="${p.id}" style="color:red;">Sil</button>
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+            document.querySelectorAll('.status-btn').forEach(b => b.addEventListener('click', toggleStatus));
+            document.querySelectorAll('.delete-btn').forEach(b => b.addEventListener('click', deleteProd));
+        } catch (err) {
+            listEl.innerHTML = Formatters.escapeHtml(err.message);
+        }
+    }
+
+    async function handleCreateProduct(e) {
+        e.preventDefault();
+        const name = document.getElementById('p-name').value.trim();
+        const description = document.getElementById('p-desc').value.trim();
+        const price = parseFloat(document.getElementById('p-price').value);
+        const stock = parseInt(document.getElementById('p-stock').value, 10);
+        const sku = document.getElementById('p-sku').value.trim();
+        const categoryId = parseInt(document.getElementById('p-catid').value, 10);
+        if (!name || !sku) {
+            Toast.error('Məhsul adı və SKU boş ola bilməz.');
+            return;
+        }
+        const button = e.currentTarget.querySelector('button[type="submit"]');
+        if (button.disabled) return;
+        button.disabled = true;
+
+        try {
+            await ProductsApi.create({ name, description, price, stock, sku, categoryId });
+            Toast.success('Məhsul yaradıldı');
+            document.getElementById('create-product-form').reset();
+            loadAdminProducts();
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            button.disabled = false;
+        }
+    }
+
+    async function toggleStatus(e) {
+        const id = e.target.dataset.id;
+        const status = e.target.dataset.status;
+        try {
+            await ProductsApi.changeStatus(id, status);
+            Toast.success('Status yeniləndi');
+            loadAdminProducts();
+        } catch (err) {
+            Toast.error(err.message);
+        }
+    }
+
+    async function deleteProd(e) {
+        const id = e.target.dataset.id;
+        if (!confirm('Məhsulu silməyə əminsiniz?')) return;
+        try {
+            await ProductsApi.delete(id);
+            Toast.info('Məhsul silindi');
+            loadAdminProducts();
+        } catch (err) {
+            Toast.error(err.message);
+        }
+    }
+</script>
+</body>
+</html>

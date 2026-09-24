@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilim - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="max-width: 500px; margin-top: 2rem;">
+    <h2>İstifadəçi Profili</h2>
+    <form id="profile-form" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 1rem;">
+        <label>İstifadəçi adı: <input type="text" id="username" readonly style="width:100%; padding:0.4rem; background:#eee;"></label>
+        <label>E-poçt: <input type="email" id="email" readonly style="width:100%; padding:0.4rem; background:#eee;"></label>
+        <label>Ad: <input type="text" id="firstName" required style="width:100%; padding:0.4rem;"></label>
+        <label>Soyad: <input type="text" id="lastName" required style="width:100%; padding:0.4rem;"></label>
+        <button type="submit" class="btn-primary-sm">Məlumatları Yenilə</button>
+    </form>
+
+    <hr style="margin: 2rem 0;">
+    <button id="delete-acc-btn" class="btn-link" style="color: var(--danger-color);">Hesabı Deaktiv Et</button>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { Auth } from '/assets/js/core/auth.js';
+    import { UsersApi } from '/assets/js/api/users-api.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    let currentUserId = null;
+    const profileForm = document.getElementById('profile-form');
+    const submitButton = profileForm.querySelector('button[type="submit"]');
+    const deleteButton = document.getElementById('delete-acc-btn');
+    submitButton.disabled = true;
+    deleteButton.disabled = true;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAuth()) return;
+        renderHeader();
+        loadProfile();
+
+        document.getElementById('profile-form').addEventListener('submit', handleUpdate);
+        document.getElementById('delete-acc-btn').addEventListener('click', handleDeleteAccount);
+    });
+
+    async function loadProfile() {
+        const user = Auth.getUser();
+        if (!user || !user.userId) return;
+        currentUserId = user.userId;
+
+        try {
+            const data = await UsersApi.getById(currentUserId);
+            document.getElementById('username').value = data.username || '';
+            document.getElementById('email').value = data.email || '';
+            document.getElementById('firstName').value = data.firstName || '';
+            document.getElementById('lastName').value = data.lastName || '';
+            submitButton.disabled = false;
+            deleteButton.disabled = false;
+        } catch (err) {
+            Toast.error(err.message);
+        }
+    }
+
+    async function handleUpdate(e) {
+        e.preventDefault();
+        const firstName = document.getElementById('firstName').value.trim();
+        const lastName = document.getElementById('lastName').value.trim();
+        if (!currentUserId || submitButton.disabled) return;
+        if (!firstName || !lastName) {
+            Toast.error('Ad və soyad boş ola bilməz.');
+            return;
+        }
+        submitButton.disabled = true;
+
+        try {
+            await UsersApi.update(currentUserId, firstName, lastName);
+            Toast.success('Profil yeniləndi');
+        } catch (err) {
+            Toast.error(err.message);
+        } finally {
+            submitButton.disabled = false;
+        }
+    }
+
+    async function handleDeleteAccount() {
+        if (!confirm('Hesabınızı deaktiv etməyə əminsiniz?')) return;
+        try {
+            await UsersApi.delete(currentUserId);
+            Toast.info('Hesab deaktiv edildi.');
+            Auth.logout();
+        } catch (err) {
+            Toast.error(err.message);
+        }
+    }
+</script>
+</body>
+</html>

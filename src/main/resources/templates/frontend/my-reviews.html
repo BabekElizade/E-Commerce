@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rəylərim - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+    <link rel="stylesheet" href="/assets/css/components.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container">
+    <h1>Rəylərim</h1>
+    <div id="reviews-list" aria-live="polite">Yüklənir...</div>
+    <div id="pagination" class="pagination"></div>
+</main>
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { Guards } from '/assets/js/core/guards.js';
+    import { ReviewsApi } from '/assets/js/api/reviews-api.js';
+    import { Formatters } from '/assets/js/core/formatters.js';
+    import { Toast } from '/assets/js/components/toast.js';
+
+    let currentPage = 0;
+    const ratings = { ONE: 1, TWO: 2, THREE: 3, FOUR: 4, FIVE: 5 };
+    if (Guards.requireAuth()) {
+        renderHeader();
+        loadReviews();
+    }
+
+    async function loadReviews(page = 0) {
+        currentPage = page;
+        const list = document.getElementById('reviews-list');
+        const pagination = document.getElementById('pagination');
+        list.textContent = 'Yüklənir...';
+        pagination.replaceChildren();
+        try {
+            const result = await ReviewsApi.getMyReviews(page, 10);
+            if (!result.content?.length && page > 0) return loadReviews(page - 1);
+            list.innerHTML = (result.content || []).map(review => `
+                <article class="product-card" style="margin-top: 1rem;">
+                    <a href="/product.html?id=${encodeURIComponent(review.productId)}">Məhsul #${Formatters.escapeHtml(review.productId)}</a>
+                    <p>Qiymətləndirmə: ${ratings[review.rating] || '—'} / 5</p>
+                    <p>${Formatters.escapeHtml(review.comment)}</p>
+                    <button type="button" class="btn-link" data-id="${review.id}">Rəyi sil</button>
+                </article>
+            `).join('') || '<p>Hələ rəy yazmamısınız.</p>';
+            list.querySelectorAll('button[data-id]').forEach(button => {
+                button.addEventListener('click', async () => {
+                    if (!confirm('Rəyi silmək istəyirsiniz?')) return;
+                    button.disabled = true;
+                    try {
+                        await ReviewsApi.delete(button.dataset.id);
+                        await loadReviews(currentPage);
+                    } catch (error) {
+                        Toast.error(error.message);
+                        button.disabled = false;
+                    }
+                });
+            });
+            for (const [label, target] of [['Əvvəlki', page - 1], ['Növbəti', page + 1]]) {
+                const button = document.createElement('button');
+                button.textContent = label;
+                button.disabled = target < 0 || target >= (result.totalPages || 0);
+                button.addEventListener('click', () => loadReviews(target));
+                pagination.appendChild(button);
+            }
+        } catch (error) {
+            list.textContent = error.message;
+        }
+    }
+</script>
+</body>
+</html>

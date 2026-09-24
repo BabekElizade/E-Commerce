@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - E-Commerce</title>
+    <link rel="stylesheet" href="/assets/css/variables.css">
+    <link rel="stylesheet" href="/assets/css/base.css">
+</head>
+<body>
+<header id="main-header"></header>
+<main class="container" style="margin-top: 2rem;">
+    <h2>Admin İdarəetmə Paneli</h2>
+    <div style="display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.5rem;">
+        <a href="/admin/products.html" class="btn-primary-sm">Məhsulların İdarə Edilməsi</a>
+        <a href="/admin/categories.html" class="btn-primary-sm">Kateqoriyaların İdarə Edilməsi</a>
+        <a href="/admin/users.html" class="btn-primary-sm">İstifadəçilər</a>
+    </div>
+</main>
+
+<script type="module">
+    import { renderHeader } from '/assets/js/components/header.js';
+    import { Guards } from '/assets/js/core/guards.js';
+
+    document.addEventListener('DOMContentLoaded', () => {
+        if (!Guards.requireAdmin()) return;
+        renderHeader();
+    });
+</script>
+</body>
+</html>
